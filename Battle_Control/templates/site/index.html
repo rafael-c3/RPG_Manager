@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG MANAGER</title>
+    <style>
+        body {
+            background-color: #18191C;
+            text-align: center;
+            color: white;
+            font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+        .link {
+            background-color: white; /* cor de fundo escura */
+            color: #18191C;               /* cor da letra */
+            text-decoration: none;      /* tira sublinhado */
+            border: none;               /* tira borda */
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .link:hover {
+            background-color: white;
+            transform: scale(1.03);
+        }
+
+        .link:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <body>
+        <h2>Brittania Fallen RPG Battle</h2>
+        <a href="{% url 'rpg:listar' %}" class="link">Personagens</a>
+        <a href="{% url 'rpg:criar' %}" class="link">Criar Novo</a>
+        <a href="{% url 'rpg:batalhar' %}" class="link">Batalhar</a>
+        <hr>
+        <br>
+    </body>
+</body>
+</html>

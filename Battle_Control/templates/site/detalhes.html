@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ personagem.nome }}</title>
+    <style>
+        body {
+            background-color: #18191C;
+            text-align: center;
+            color: white;
+            font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+        .link {
+            background-color: white; /* cor de fundo escura */
+            color: #18191C;               /* cor da letra */
+            text-decoration: none;      /* tira sublinhado */
+            border: none;               /* tira borda */
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .link:hover {
+            background-color: white;
+            transform: scale(1.03);
+        }
+
+        .link:active {
+            transform: scale(0.98);
+        }
+        div {
+            background-color: white; /* cor de fundo escura */
+            color: #18191C;               /* cor da letra */
+            padding: 10px 50px; /* altura e largura */
+            border-radius: 15px;
+            display: inline-block;
+            cursor: default;
+            transition: 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <h2>Ficha de {{ personagem.nome }}</h2>
+    <div>
+        <b><p>Nome: {{ personagem.nome }} | Lvl {{ personagem.level }}</p>
+        <p>Tipo: {{ personagem.tipo }}</p></b>
+        <br>
+        <p><b>Vida:</b> {{ personagem.vida|floatformat:"-2" }}</p>
+        <p><b>Defesa:</b> {{ personagem.defesa|floatformat:"-2" }}</p>
+        <p><b>Força:</b> {{ personagem.força|floatformat:"-2" }}</p>
+        <p><b>Magia:</b> {{ personagem.magia|floatformat:"-2" }}</p>
+        <p><b>Mana:</b> {{ personagem.mana|floatformat:"-2" }}</p>
+        <p><b>Agilidade:</b> {{ personagem.agilidade|floatformat:"-2" }}</p>
+        <p><b>Resistencia:</b> {{ personagem.resistencia|floatformat:"-2" }}</p>
+        <p><b>Necro:</b> {{ personagem.necro|floatformat:"-2" }}</p>
+        <p><b>Sorte:</b> {{ personagem.sorte|floatformat:"-2" }}</p>
+        <P>{{ personagem.imagem }}</p>
+    </div>
+    <br><br><a class="link" href="{% url 'rpg:listar' %}">Voltar</a>
+</body>
+</html>

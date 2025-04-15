@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alterar</title>
+    <style>
+        body {
+            background-color: #18191C;
+            text-align: center;
+            color: white;
+            font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+        .link {
+            font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+            background-color: white; /* cor de fundo escura */
+            color: #18191C;               /* cor da letra */
+            text-decoration: none;      /* tira sublinhado */
+            border: none;               /* tira borda */
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .link:hover {                   /* quando mouse passa por cima */
+            background-color: white;  /* Muda a cor */
+            transform: scale(1.03);     /* aumenta o tamanho */
+        }
+        .link:active {              /* quando clica e segura */
+            transform: scale(0.98); /* O quão diminui */
+        }
+        
+        .form {
+            color: white;
+            font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+        .form-number {
+            font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+            width: 70px;
+            text-align: center;
+            height: 25px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;;
+            font-size: 15px;
+        }
+        .form-control {
+            font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+            width: 170px;
+            text-align: center;
+            height: 25px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;;
+            font-size: 15px;
+        }
+        .form-control:focus, .form-number:focus{
+            border-color: white;
+            box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.5);
+        }
+        .form-button {
+            font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+            background-color: white; /* cor de fundo escura */
+            color: #18191C;               /* cor da letra */
+            text-decoration: none;      /* tira sublinhado */
+            border: none;               /* tira borda */
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <h2>Alterar ficha de {{ personagem.nome }}</h2>
+    <form class="form" action="{% url 'rpg:atualizar' personagem.id %}" method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <br>
+            {{ field.label_tag }}
+            
+            {{ field }}
+            <br>
+        {% endfor %}
+        <br>
+        <button class="link" type="submit">Alterar</button>
+    </form><br>
+    <a class="link" href="{% url 'rpg:listar' %}">Voltar</a>
+</body>
+</html>

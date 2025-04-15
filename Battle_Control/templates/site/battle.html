@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hora da Batalha</title>
+    <style>
+        body {
+            background-color: #18191C;
+            text-align: center;
+            color: white;
+            font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+        .link {
+            background-color: white; /* cor de fundo escura */
+            color: #18191C;               /* cor da letra */
+            text-decoration: none;      /* tira sublinhado */
+            border: none;               /* tira borda */
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <h2>Selecione os Personagens</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="personagem">Escolha um personagem:</label>
+        <select name="personagem" id="personagem">
+          {% for personagem in personagens %}
+            <option value="{{ personagem.id }}">{{ personagem.nome }} ({{ personagem.tipo }})</option>
+          {% endfor %}
+        </select>
+        <button type="submit">Adicionar</button>
+      </form>
+      
+      <form method="post" style="margin-top: 1rem;">
+        {% csrf_token %}
+        <button name="limpar" value="1" type="submit">Limpar seleção</button>
+      </form>
+      
+      <hr>
+      
+      <h2>Personagens Selecionados por Tipo:</h2>
+      {% if personagens_por_tipo %}
+        {% for tipo, lista in personagens_por_tipo.items %}
+          <h3>{{ tipo|title }}</h3>
+          <ul>
+            {% for p in lista %}
+              <p>
+                <strong>{{ p.nome }}</strong>
+                <strong>Vida atual: {{ p.vida }}</strong>
+                <strong>Resistência: {{ p.resistencia }}</strong>
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                  <label for="dano">Dano:</label>
+                  <input type="number" name="dano" min="0">
+                  <button type="submit">Aplicar Dano</button>
+                </form>
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="remover_id" value="{{ p.id }}">
+                  <button type="submit">Remover</button>
+                </form>
+              </p>
+            {% endfor %}
+          </ul>
+        {% endfor %}
+      {% else %}
+        <p>Nenhum personagem adicionado ainda.</p>
+      {% endif %}
+
+    <a class='link'href="{% url 'rpg:index' %}">Voltar</a>
+    
+</body>
+<script>
+    function adicionarSelect() {
+      const container = document.getElementById('select-container');
+      const novoSelect = container.children[0].cloneNode(true);
+      container.appendChild(novoSelect);
+    }
+</script>
+</html>
