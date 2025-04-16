@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Personagem, Item, Inventario, Efeito, EfeitoAplicado
+from .models import Personagem, Item, Inventario, Efeito, EfeitoModificador, EfeitoAplicado
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
@@ -17,5 +17,12 @@ class PersonagemAdmin(admin.ModelAdmin):
     list_display = ('nome', 'tipo', 'vida', 'defesa', 'armadura', 'força')
     search_fields = ('nome',)
 
-admin.site.register(Efeito)
+class EfeitoModificadorInline(admin.TabularInline):
+    model = EfeitoModificador
+    extra = 1
+
+class EfeitoAdmin(admin.ModelAdmin):
+    inlines = [EfeitoModificadorInline]
+
+admin.site.register(Efeito, EfeitoAdmin)
 admin.site.register(EfeitoAplicado)

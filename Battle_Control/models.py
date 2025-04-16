@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from decimal import Decimal
 
 class Personagem(models.Model):
     Tipo_Personagem = [
@@ -88,6 +89,15 @@ class Efeito(models.Model):
         ('debuff', 'Debuff'),
     ]
 
+    nome = models.CharField(max_length=50)
+    tipo = models.CharField(max_length=10, choices=TIPOS)
+    reversivel = models.BooleanField(default=True, help_text="Se marcado, o efeito será revertido ao ser removido.")
+
+    def __str__(self):
+        return f"{self.nome} ({self.tipo})"
+
+
+class EfeitoModificador(models.Model):
     ATRIBUTOS = (
         ('vida', 'Vida'),
         ('defesa', 'Defesa'),
@@ -101,37 +111,41 @@ class Efeito(models.Model):
         ('sorte', 'Sorte'),
     )
 
-    nome = models.CharField(max_length=50)
-    tipo = models.CharField(max_length=10, choices=TIPOS)
-    atributo_afetado = models.CharField(max_length=20, choices=ATRIBUTOS)
+    efeito = models.ForeignKey(Efeito, on_delete=models.CASCADE, related_name='modificadores')
+    atributo = models.CharField(max_length=20, choices=ATRIBUTOS)
     valor = models.DecimalField(max_digits=5, decimal_places=1)
-    reversivel = models.BooleanField(default=True, help_text="Se marcado, o efeito será revertido ao ser removido.")
 
     def __str__(self):
-        return f"{self.nome} ({self.tipo})"
+        return f"{self.atributo} {self.valor:+}"
 
 
 class EfeitoAplicado(models.Model):
     personagem = models.ForeignKey(Personagem, on_delete=models.CASCADE, related_name='efeitos_aplicados')
     efeito = models.ForeignKey(Efeito, on_delete=models.CASCADE)
     ativo = models.BooleanField(default=True)
-    valor_aplicado = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+
+    # Armazenar modificações aplicadas, para reversão
+    modificacoes_aplicadas = models.JSONField(default=dict)
 
     def aplicar(self):
-        atributo = self.efeito.atributo_afetado
-        valor = self.efeito.valor
-        setattr(self.personagem, atributo, getattr(self.personagem, atributo) + valor)
-        self.valor_aplicado = valor
+        self.modificacoes_aplicadas = {}
+        for modificador in self.efeito.modificadores.all():
+            atributo = modificador.atributo
+            valor = modificador.valor
+            original = getattr(self.personagem, atributo)
+            setattr(self.personagem, atributo, original + valor)
+            self.modificacoes_aplicadas[atributo] = float(valor)
         self.personagem.save()
         self.save()
 
     def remover(self):
         if self.efeito.reversivel:
-            atributo = self.efeito.atributo_afetado
-            setattr(self.personagem, atributo, getattr(self.personagem, atributo) - self.valor_aplicado)
+            for mod in self.efeito.modificadores.all():
+                atributo = mod.atributo
+                valor = Decimal(mod.valor)
+                atual = getattr(self.personagem, atributo)
+                setattr(self.personagem, atributo, atual - valor)
             self.personagem.save()
-    
-    # Sempre desativa o efeito (pra sumir da tela)
         self.ativo = False
         self.save()
 

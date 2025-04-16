@@ -74,14 +74,15 @@ def battle_view(request):
             personagem.save()
             return redirect('rpg:batalhar')
         
-        if 'personagem_id' in request.POST and 'efeito_id' in request.POST:
-            personagem_id = int(request.POST['personagem_id'])
+        if 'efeito_id' in request.POST and 'personagem_id' in request.POST:
             efeito_id = int(request.POST['efeito_id'])
+            personagem_id = int(request.POST['personagem_id'])
             personagem = get_object_or_404(Personagem, id=personagem_id)
             efeito = get_object_or_404(Efeito, id=efeito_id)
 
             efeito_aplicado = EfeitoAplicado.objects.create(personagem=personagem, efeito=efeito)
             efeito_aplicado.aplicar()
+
             return redirect('rpg:batalhar')
 
         elif 'remover_efeito_id' in request.POST:
