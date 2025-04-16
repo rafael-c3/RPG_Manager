@@ -52,9 +52,31 @@
           <ul>
             {% for p in lista %}
               <p>
-                <strong>{{ p.nome }}</strong>
-                <strong>Vida atual: {{ p.vida }}</strong>
-                <strong>Resistência: {{ p.resistencia }}</strong>
+                <strong>
+                  {{ p.nome }}<br>
+                  Vida atual: {{ p.vida }}<br>
+                  Resistência: {{ p.resistencia }}<br>
+                  Defesa: {{ p.defesa_total }}<br>
+                  Armadura: {{ p.armadura }}<br>
+                </strong>
+
+                  <!-- Efeitos Ativos -->
+                  <p><strong>Efeitos ativos:</strong></p>
+                  <ul>
+                    {% for efeito_ativo in p.efeitos_ativos.all %}
+                      <li>
+                        {{ efeito_ativo.efeito.nome }} ({{ efeito_ativo.efeito.atributo_afetado }}: {{ efeito_ativo.efeito.valor }})
+                        <form method="post" style="display:inline;">
+                          {% csrf_token %}
+                          <input type="hidden" name="remover_efeito_id" value="{{ efeito_ativo.id }}">
+                          <button type="submit">Remover</button>
+                        </form>
+                      </li>
+                    {% empty %}
+                      <li>Nenhum efeito</li>
+                    {% endfor %}
+                  </ul>
+
                 <form method="post">
                   {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
@@ -62,6 +84,51 @@
                   <input type="number" name="dano" min="0">
                   <button type="submit">Aplicar Dano</button>
                 </form>
+
+                <!-- Curar personagem -->
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                  <label>Cura:</label>
+                  <input type="number" name="cura" min="0">
+                  <button type="submit">Curar</button>
+                </form>
+
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                  <label>Reduzir Armadura:</label>
+                  <input type="number" name="armadura_dano" min="0">
+                  <button type="submit">Reduzir</button>
+                </form>
+
+                {% for inv in p.inventario_set.all %}
+                  {% if inv.item.tipo == 'poção' %}
+                      <form method="post" style="margin-top: 0.5rem;">
+                          {% csrf_token %}
+                          <input type="hidden" name="usar_item" value="1">
+                          <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                          <input type="hidden" name="item_id" value="{{ inv.item.id }}">
+                          <button type="submit">
+                              Usar {{ inv.item.nome }} (x{{ inv.quantidade }})
+                          </button>
+                      </form>
+                  {% endif %}
+                {% endfor %}
+
+                   <!-- Aplicar Efeito -->
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                  <label>Aplicar Efeito:</label>
+                  <select name="efeito_id">
+                    {% for efeito in efeitos %}
+                      <option value="{{ efeito.id }}">{{ efeito.nome }} ({{ efeito.tipo }})</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" name="aplicar_efeito">Aplicar</button>
+                </form>
+
                 <form method="post">
                   {% csrf_token %}
                   <input type="hidden" name="remover_id" value="{{ p.id }}">
