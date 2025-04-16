@@ -52,11 +52,20 @@ def battle_view(request):
 
     if request.method == 'POST':
         if 'personagem_id' in request.POST and 'dano' in request.POST:
-            personagem_id = int(request.POST.get('personagem_id'))
+            personagem_id = request.POST.get('personagem_id')
             dano = int(request.POST.get('dano', 0))
-            personagem = get_object_or_404(Personagem, id=personagem_id)
-            personagem.receber_dano(dano)
-            return redirect('rpg:batalhar')  # Atualiza a tela
+            critico = 'critico' in request.POST  # checkbox marcada?
+
+            if critico:
+                dano *= 2
+
+            personagem = Personagem.objects.get(id=personagem_id)
+
+            # Aplica a resistência
+            dano_final = max(dano - personagem.resistencia, 0)
+
+            personagem.vida -= dano_final
+            personagem.save()
         
         if 'personagem_id' in request.POST and 'cura' in request.POST:
             personagem_id = int(request.POST.get('personagem_id'))
