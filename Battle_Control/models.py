@@ -130,6 +130,8 @@ class EfeitoAplicado(models.Model):
             atributo = self.efeito.atributo_afetado
             setattr(self.personagem, atributo, getattr(self.personagem, atributo) - self.valor_aplicado)
             self.personagem.save()
+    
+    # Sempre desativa o efeito (pra sumir da tela)
         self.ativo = False
         self.save()
 

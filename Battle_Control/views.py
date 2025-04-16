@@ -75,12 +75,19 @@ def battle_view(request):
             return redirect('rpg:batalhar')
         
         if 'personagem_id' in request.POST and 'efeito_id' in request.POST:
-            personagem_id = int(request.POST.get('personagem_id'))
-            efeito_id = int(request.POST.get('efeito_id'))
+            personagem_id = int(request.POST['personagem_id'])
+            efeito_id = int(request.POST['efeito_id'])
             personagem = get_object_or_404(Personagem, id=personagem_id)
             efeito = get_object_or_404(Efeito, id=efeito_id)
+
             efeito_aplicado = EfeitoAplicado.objects.create(personagem=personagem, efeito=efeito)
             efeito_aplicado.aplicar()
+            return redirect('rpg:batalhar')
+
+        elif 'remover_efeito_id' in request.POST:
+            efeito_aplicado = get_object_or_404(EfeitoAplicado, id=request.POST['remover_efeito_id'])
+            efeito_aplicado.remover()
+            return redirect('rpg:batalhar')
 
         if 'limpar' in request.POST:
             request.session['selecionados'] = []
@@ -126,7 +133,7 @@ def battle_view(request):
     # Pega todos os personagens disponíveis
     personagens = Personagem.objects.all()
     # Busca os efeitos reversíveis disponíveis
-    efeitos_reversiveis = Efeito.objects.filter(reversivel=True)
+    efeitos = Efeito.objects.all()  # mostra todos
     # Busca personagens selecionados na sessão
     selecionados_ids = request.session.get('selecionados', [])
     selecionados = Personagem.objects.filter(id__in=selecionados_ids)
@@ -143,5 +150,6 @@ def battle_view(request):
     return render(request, 'site/battle.html', {
         'personagens': personagens,
         'personagens_por_tipo': personagens_por_tipo,
-        'efeitos_reversiveis': efeitos_reversiveis,
+        'efeitos': efeitos,
+
     })

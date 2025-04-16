@@ -60,22 +60,23 @@
                   Armadura: {{ p.armadura }}<br>
                 </strong>
 
-                  <!-- Efeitos Ativos -->
-                  <p><strong>Efeitos ativos:</strong></p>
-                  <ul>
-                    {% for efeito_ativo in p.efeitos_ativos.all %}
+                <!-- Lista de efeitos ativos -->
+                <p>Efeitos aplicados:</p>
+                <ul>
+                  {% for efeito_aplicado in p.efeitos_aplicados.all %}
+                    {% if efeito_aplicado.ativo %}
                       <li>
-                        {{ efeito_ativo.efeito.nome }} ({{ efeito_ativo.efeito.atributo_afetado }}: {{ efeito_ativo.efeito.valor }})
+                        {{ efeito_aplicado.efeito.nome }} 
+                        ({{ efeito_aplicado.efeito.tipo }}, {{ efeito_aplicado.efeito.valor }})
                         <form method="post" style="display:inline;">
                           {% csrf_token %}
-                          <input type="hidden" name="remover_efeito_id" value="{{ efeito_ativo.id }}">
+                          <input type="hidden" name="remover_efeito_id" value="{{ efeito_aplicado.id }}">
                           <button type="submit">Remover</button>
                         </form>
                       </li>
-                    {% empty %}
-                      <li>Nenhum efeito</li>
-                    {% endfor %}
-                  </ul>
+                    {% endif %}
+                  {% endfor %}
+                </ul>
 
                 <form method="post">
                   {% csrf_token %}
@@ -116,17 +117,18 @@
                   {% endif %}
                 {% endfor %}
 
-                   <!-- Aplicar Efeito -->
+                <!-- Formulário para aplicar efeito -->
                 <form method="post">
                   {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <label>Aplicar Efeito:</label>
                   <select name="efeito_id">
                     {% for efeito in efeitos %}
-                      <option value="{{ efeito.id }}">{{ efeito.nome }} ({{ efeito.tipo }})</option>
+                      <option value="{{ efeito.id }}">
+                        {{ efeito.nome }} - {{ efeito.tipo }} ({{ efeito.atributo_afetado }}: {{ efeito.valor }})
+                      </option>
                     {% endfor %}
                   </select>
-                  <button type="submit" name="aplicar_efeito">Aplicar</button>
+                  <button type="submit">Aplicar Efeito</button>
                 </form>
 
                 <form method="post">
