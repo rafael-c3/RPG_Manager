@@ -92,6 +92,8 @@ class Efeito(models.Model):
     nome = models.CharField(max_length=50)
     tipo = models.CharField(max_length=10, choices=TIPOS)
     reversivel = models.BooleanField(default=True, help_text="Se marcado, o efeito será revertido ao ser removido.")
+    modificador_dano = models.IntegerField(default=0)  # positivo ou negativo
+
 
     def __str__(self):
         return f"{self.nome} ({self.tipo})"

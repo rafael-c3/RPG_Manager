@@ -81,6 +81,15 @@
                     {% endif %}
                   {% endfor %}
                 </ul>
+                {% with dano_bonus=0 %}
+                  {% for efeito_aplicado in p.efeitos_aplicados.all %}
+                    {% if efeito_aplicado.ativo %}
+                      {% with dano_bonus=dano_bonus|add:efeito_aplicado.efeito.modificador_dano %}
+                      {% endwith %}
+                    {% endif %}
+                  {% endfor %}
+                  <p>Bônus de Dano Ativo: {{ dano_bonus }}</p>
+                {% endwith %}
 
                 <form method="post">
                   {% csrf_token %}

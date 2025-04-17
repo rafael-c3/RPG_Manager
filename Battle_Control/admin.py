@@ -23,6 +23,9 @@ class EfeitoModificadorInline(admin.TabularInline):
 
 class EfeitoAdmin(admin.ModelAdmin):
     inlines = [EfeitoModificadorInline]
+    list_display = ('nome', 'tipo', 'reversivel', 'modificador_dano')
+    list_filter = ('tipo', 'reversivel')
+    search_fields = ('nome',)
 
 admin.site.register(Efeito, EfeitoAdmin)
 admin.site.register(EfeitoAplicado)
