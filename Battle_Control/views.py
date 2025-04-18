@@ -54,6 +54,7 @@ def battle_view(request):
         if 'personagem_id' in request.POST and 'dano' in request.POST:
             personagem_id = request.POST.get('personagem_id')
             dano_base = int(request.POST.get('dano', 0))
+            
             critico = 'critico' in request.POST  # checkbox marcada?
 
             personagem = Personagem.objects.get(id=personagem_id)
@@ -67,6 +68,8 @@ def battle_view(request):
 
             if critico:
                 dano_modificado *= 2
+                personagem.armadura = max(personagem.armadura - 1, 0)
+
 
             # Aplica a resistência
             dano_final = max(dano_modificado - personagem.resistencia, 0)
