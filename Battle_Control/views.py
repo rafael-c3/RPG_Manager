@@ -62,13 +62,15 @@ def battle_view(request):
             for efeito in personagem.efeitos_aplicados.filter(ativo=True):
                 modificador_total += efeito.efeito.modificador_dano
 
-            dano_total = dano + modificador_total
+            dano_base = dano
+            bonus = modificador_total
 
             if critico:
-                dano_total *= 2  # dobra dano
+                dano_total = (dano_base * 2) + bonus  # dobra só o base e soma o bônus
                 personagem.armadura = max(personagem.armadura - 1, 0)  # -1 armadura
                 dano_final = dano_total  # ignora resistência
             else:
+                dano_total = dano_base + bonus
                 dano_final = max(dano_total - personagem.resistencia, 0)
 
             personagem.vida = max(personagem.vida - dano_final, 0)
