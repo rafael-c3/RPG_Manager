@@ -52,29 +52,26 @@ def battle_view(request):
 
     if request.method == 'POST':
         if 'personagem_id' in request.POST and 'dano' in request.POST:
-            personagem_id = request.POST.get('personagem_id')
-            dano_base = int(request.POST.get('dano', 0))
-            
-            critico = 'critico' in request.POST  # checkbox marcada?
-
+            personagem_id = request.POST.get("personagem_id")
             personagem = Personagem.objects.get(id=personagem_id)
+            dano = int(request.POST.get("dano", 0))
+            critico = request.POST.get("critico") == "on"
 
-                # Soma os modificadores de dano de efeitos ativos
+            # Modificador de dano de efeitos ativos
             modificador_total = 0
-            for efeito_aplicado in personagem.efeitos_aplicados.filter(ativo=True):
-                modificador_total += efeito_aplicado.efeito.modificador_dano
+            for efeito in personagem.efeitos_aplicados.filter(ativo=True):
+                modificador_total += efeito.efeito.modificador_dano
 
-            dano_modificado = dano_base + modificador_total
+            dano_total = dano + modificador_total
 
             if critico:
-                dano_modificado *= 2
-                personagem.armadura = max(personagem.armadura - 1, 0)
+                dano_total *= 2  # dobra dano
+                personagem.armadura = max(personagem.armadura - 1, 0)  # -1 armadura
+                dano_final = dano_total  # ignora resistência
+            else:
+                dano_final = max(dano_total - personagem.resistencia, 0)
 
-
-            # Aplica a resistência
-            dano_final = max(dano_modificado - personagem.resistencia, 0)
-
-            personagem.vida -= dano_final
+            personagem.vida = max(personagem.vida - dano_final, 0)
             personagem.save()
         
         if 'personagem_id' in request.POST and 'cura' in request.POST:
