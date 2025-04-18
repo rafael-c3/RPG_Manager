@@ -1,5 +1,6 @@
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Personagem, Inventario, Item, Efeito, EfeitoAplicado
+from .models import Personagem, Inventario, Item, Efeito, EfeitoAplicado, ItemAplicado
 from .forms import PersonagemForm
 from django.http import HttpResponse
 
@@ -139,6 +140,8 @@ def battle_view(request):
         elif item.atributo_afetado == 'armadura':
             personagem.armadura += item.valor_efeito
         # pode fazer mais efeitos depois...
+        if item.reversivel:
+            ItemAplicado.objects.create(personagem=personagem, item=item)
 
         inventario.quantidade -= 1
         if inventario.quantidade <= 0:
@@ -148,6 +151,22 @@ def battle_view(request):
         personagem.save()
 
         return redirect('rpg:batalhar')
+    
+    remover_item_id = request.POST.get("remover_item_aplicado_id")
+    if remover_item_id:
+        aplicado = ItemAplicado.objects.get(id=remover_item_id)
+        personagem = aplicado.personagem
+        item = aplicado.item
+
+        # Reverte o efeito (ex: remove o bônus)
+        valor = Decimal(item.valor_efeito)
+        atributo = item.atributo_afetado
+        if hasattr(personagem, atributo):
+            setattr(personagem, atributo, getattr(personagem, atributo) - valor)
+            personagem.save()
+
+        aplicado.ativo = False
+        aplicado.save()
 
     # Pega todos os personagens disponíveis
     personagens = Personagem.objects.all()

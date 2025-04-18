@@ -136,6 +136,19 @@
                   {% endif %}
                 {% endfor %}
 
+                {% for item_aplicado in p.itens_aplicados.all %}
+                  {% if item_aplicado.ativo %}
+                    <li>
+                      🌀 {{ item_aplicado.item.nome }}
+                      <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="remover_item_aplicado_id" value="{{ item_aplicado.id }}">
+                        <button type="submit">Remover</button>
+                      </form>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+
                 <!-- Aplicar Efeito -->
                 <form method="post">
                   {% csrf_token %}

@@ -55,25 +55,37 @@ class Personagem(models.Model):
     
 class Item(models.Model):
     TIPO_ITEM = [
-        ('arma', 'Arma'),
-        ('escudo', 'Escudo'),
         ('poção', 'Poção'),
-        ('outro', 'Outro'),
     ]
     nome = models.CharField(max_length=50)
-    tipo = models.CharField(max_length=10, choices=TIPO_ITEM)
+    tipo = models.CharField(max_length=10, choices=TIPO_ITEM, default='Poção')
     descricao = models.TextField(blank=True)
     valor_efeito = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    reversivel = models.BooleanField(default=False)
     atributo_afetado = models.CharField(max_length=20, choices=[
         ('vida', 'Vida'),
-        ('mana', 'Mana'),
-        ('força', 'Força'),
         ('defesa', 'Defesa'),
         ('armadura', 'Armadura'),
+        ('força', 'Força'),
+        ('magia', 'Magia'),
+        ('mana', 'Mana'),
+        ('agilidade', 'Agilidade'),
+        ('resistencia', 'Resistência'),
+        ('necro', 'Necro'),
+        ('sorte', 'Sorte'),
     ])
 
     def __str__(self):
         return self.nome
+    
+class ItemAplicado(models.Model):
+    personagem = models.ForeignKey(Personagem, on_delete=models.CASCADE, related_name='itens_aplicados')
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    ativo = models.BooleanField(default=True)
+    data_aplicacao = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.item.nome} em {self.personagem.nome}"
 
 class Inventario(models.Model):
     personagem = models.ForeignKey(Personagem, on_delete=models.CASCADE)
@@ -87,6 +99,8 @@ class Efeito(models.Model):
     TIPOS = [
         ('buff', 'Buff'),
         ('debuff', 'Debuff'),
+        ('passiva', 'Passiva'),
+        ('arma', 'Arma'),
     ]
 
     nome = models.CharField(max_length=50)
