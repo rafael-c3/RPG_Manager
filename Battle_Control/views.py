@@ -74,9 +74,19 @@ def battle_view(request):
                 dano_total = dano_base + bonus
                 dano_final = max(dano_total - personagem.resistencia, 0)
 
+            # Aplicar dano à barreira mágica primeiro, depois à vida
+            if personagem.barreira_magica > 0:
+                if dano_final <= personagem.barreira_magica:
+                    personagem.barreira_magica -= dano_final
+                    dano_final = 0
+                else:
+                    dano_final -= personagem.barreira_magica
+                    personagem.barreira_magica = 0
+
+            # Aplicar o restante do dano à vida
             personagem.vida = max(personagem.vida - dano_final, 0)
             personagem.save()
-        
+                
         if 'personagem_id' in request.POST and 'cura' in request.POST:
             personagem_id = int(request.POST.get('personagem_id'))
             cura = int(request.POST.get('cura', 0))
@@ -139,6 +149,8 @@ def battle_view(request):
             personagem.mana += item.valor_efeito
         elif item.atributo_afetado == 'armadura':
             personagem.armadura += item.valor_efeito
+        elif item.atributo_afetado == 'barreira_magica':
+            personagem.barreira_magica += item.valor_efeito
         # pode fazer mais efeitos depois...
         if item.reversivel:
             ItemAplicado.objects.create(personagem=personagem, item=item)

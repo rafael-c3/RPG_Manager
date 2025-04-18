@@ -23,6 +23,8 @@ class Personagem(models.Model):
     necro = models.DecimalField(max_digits=5, decimal_places=1)
     sorte = models.DecimalField(max_digits=5, decimal_places=1)
 
+    barreira_magica = models.PositiveIntegerField(default=0)
+
     imagem = models.ImageField(upload_to='imagens/', null=True, blank=True)
 
     # Lógica da Armadura e Defesa
@@ -73,6 +75,7 @@ class Item(models.Model):
         ('resistencia', 'Resistência'),
         ('necro', 'Necro'),
         ('sorte', 'Sorte'),
+        ('barreira_magica', 'Barreira Mágica')
     ])
 
     def __str__(self):
@@ -125,6 +128,7 @@ class EfeitoModificador(models.Model):
         ('resistencia', 'Resistência'),
         ('necro', 'Necro'),
         ('sorte', 'Sorte'),
+        ('barreira_magica', 'Barreira Mágica')
     )
 
     efeito = models.ForeignKey(Efeito, on_delete=models.CASCADE, related_name='modificadores')
