@@ -52,6 +52,19 @@
           <ul>
             {% for p in lista %}
               <p>
+                <p><strong>Turno:</strong> {{ p.turno }}</p>
+
+                <form method="post" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                  <button type="submit" name="aumentar_turno">+</button>
+                </form>
+
+                <form method="post" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                  <button type="submit" name="diminuir_turno">-</button>
+                </form>
                 <strong>
                   {{ p.nome }}<br>
                   Barreira Mágica: {{ p.barreira_magica }}<br>

@@ -24,6 +24,7 @@ class Personagem(models.Model):
     sorte = models.DecimalField(max_digits=5, decimal_places=1)
 
     barreira_magica = models.PositiveIntegerField(default=0)
+    turno = models.IntegerField(default=0)
 
     imagem = models.ImageField(upload_to='imagens/', null=True, blank=True)
 

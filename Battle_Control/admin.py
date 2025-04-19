@@ -14,7 +14,7 @@ class InventarioAdmin(admin.ModelAdmin):
 
 @admin.register(Personagem)
 class PersonagemAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'tipo', 'vida', 'defesa', 'armadura', 'força')
+    list_display = ('nome', 'tipo', 'level', 'vida', 'defesa', 'força', 'magia')
     search_fields = ('nome',)
 
 class EfeitoModificadorInline(admin.TabularInline):

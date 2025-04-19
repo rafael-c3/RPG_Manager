@@ -180,6 +180,20 @@ def battle_view(request):
         aplicado.ativo = False
         aplicado.save()
 
+    if 'aumentar_turno' in request.POST:
+        personagem_id = int(request.POST.get('personagem_id'))
+        personagem = get_object_or_404(Personagem, id=personagem_id)
+        personagem.turno += 1
+        personagem.save()
+        return redirect('rpg:batalhar')
+
+    if 'diminuir_turno' in request.POST:
+        personagem_id = int(request.POST.get('personagem_id'))
+        personagem = get_object_or_404(Personagem, id=personagem_id)
+        personagem.turno = max(0, personagem.turno - 1)  # Evita número negativo
+        personagem.save()
+        return redirect('rpg:batalhar')
+
     # Pega todos os personagens disponíveis
     personagens = Personagem.objects.all()
     # Busca os efeitos reversíveis disponíveis
