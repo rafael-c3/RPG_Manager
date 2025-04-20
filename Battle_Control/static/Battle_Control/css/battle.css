@@ -15,17 +15,3 @@ body {
     cursor: pointer;
     transition: 0.2s;
 }
-.grid-personagens {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-  
-.personagem-card {
-    background-color: #f8f8f8;
-    padding: 1rem;
-    border-radius: 10px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-}
-  
