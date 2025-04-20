@@ -30,47 +30,48 @@
       
       <hr>
       
-      <h2>Personagens Selecionados por Tipo:</h2>
-
       {% if personagens_por_tipo %}
+      <div class="personagem-grid"></div>
         {% for tipo, lista in personagens_por_tipo.items %}
           <h3>{{ tipo|title }}</h3>
           <ul>
-          <div class="grid-personagens">  <!-- ADICIONE ESSA DIV AQUI -->
+          <div class="cards-container">  <!-- ADICIONE ESSA DIV AQUI -->
             
             {% for p in lista %}
-            <div class="personagem-card">
+            <div class="card">
 
               <p>
-                <p><strong>Turno:</strong> {{ p.turno }}</p>
-
-                <form method="post" style="display: inline;">
+                <div id="turno-{{ p.id }}">
+                  <p><strong>Turno:</strong> {{ p.turno }}</p>
+                </div>
+                <form method="post" style="display: inline;" class="turno-form" data-action="diminuir" data-id="{{ p.id }}">
                   {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
                   <button type="submit" name="aumentar_turno">+</button>
                 </form>
 
-                <form method="post" style="display: inline;">
+                <form method="post" style="display: inline;" class="turno-form" data-action="diminuir" data-id="{{ p.id }}">
                   {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
                   <button type="submit" name="diminuir_turno">-</button>
                 </form><br>
+
+                <strong>{{ p.nome }} - Lv {{ p.level }}</strong><br>
                 {% if p.imagem %}
                   <img src="{{ p.imagem.url }}" width="100">
                 {% else %}
                   <em>Sem imagem</em>
-                {% endif %}
-                
-                <br>
+                {% endif %}<br><br>
                 <strong>
-                  {{ p.nome }}<br>
-                  Barreira Mágica: {{ p.barreira_magica }}<br>
-                  Vida atual: {{ p.vida }}
-                  Resistência: {{ p.resistencia }}<br>
-                  Defesa: {{ p.defesa_total }}<br>
-                  Armadura: {{ p.armadura }}<br>
+                  Vida atual: {{ p.vida|floatformat:"-2" }} ({{ p.barreira_magica }})<br>
+                  Defesa: {{ p.defesa_total|floatformat:"-2" }} ({{ p.armadura|floatformat:"-2" }})<br>
+                  Resistência: {{ p.resistencia|floatformat:"-2" }}<br>
+                  Força: {{ p.força|floatformat:"-2" }}<br>
+                  Magia: {{ p.magia|floatformat:"-2" }}<br>
+                  Mana: {{ p.mana|floatformat:"-2" }}<br>
+                  Agilidade: {{ p.agilidade|floatformat:"-2" }}<br>
+                  Sorte: {{ p.sorte|floatformat:"-2" }}<br>
                 </strong>
-
                 <!-- Listar Efeitos Ativos -->
                 <ul>
                   {% for efeito_aplicado in p.efeitos_aplicados.all %}
@@ -99,8 +100,8 @@
                       {% endwith %}
                     {% endif %}
                   {% endfor %}
-                  <p>Bônus de Dano Ativo: {{ dano_bonus }}</p>
                 {% endwith %}
+                <br>
 
                 <form method="post">
                   {% csrf_token %}
@@ -123,14 +124,6 @@
                   <label>Cura:</label>
                   <input type="number" name="cura" min="0">
                   <button type="submit">Curar</button>
-                </form>
-
-                <form method="post">
-                  {% csrf_token %}
-                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <label>Reduzir Armadura:</label>
-                  <input type="number" name="armadura_dano" min="0">
-                  <button type="submit">Reduzir</button>
                 </form>
 
                 {% for inv in p.inventario_set.all %}
@@ -207,29 +200,45 @@
       {% else %}
         <p>Nenhum personagem adicionado ainda.</p>
       {% endif %}
+      </div>
+
 
     <a class='link'href="{% url 'rpg:index' %}">Voltar</a>
-    <script>
-  const turnos = {};
 
-  function alterarTurno(personagemId, valor) {
-    if (!turnos.hasOwnProperty(personagemId)) {
-      turnos[personagemId] = 0;
-    }
 
-    turnos[personagemId] += valor;
-
-    // Evita número negativo, se quiser
-    if (turnos[personagemId] < 0) {
-      turnos[personagemId] = 0;
-    }
-
-    const span = document.getElementById(`contador-turnos-${personagemId}`);
-    if (span) {
-      span.textContent = turnos[personagemId];
-    }
-  }
-</script>
+  <script>
+      document.querySelectorAll('.turno-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault(); // Impede o recarregamento da página
+      
+          const personagemId = this.dataset.id;
+          const action = this.dataset.action;
+          const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+      
+          fetch("{% url 'rpg:batalhar' %}", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRFToken': csrfToken
+            },
+            body: new URLSearchParams({
+              personagem_id: personagemId,
+              [action === 'aumentar' ? 'aumentar_turno' : 'diminuir_turno']: '',
+            })
+          })
+          .then(response => response.text())
+          .then(html => {
+            document.querySelector(`#turno-${personagemId}`).innerHTML = data.html;
+            // Recarrega apenas a parte do turno do personagem
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newTurno = doc.querySelector(`#turno-${personagemId}`);
+            document.querySelector(`#turno-${personagemId}`).innerHTML = newTurno.innerHTML;
+          })
+          .catch(error => console.error('Erro ao atualizar turno:', error));
+        });
+      });
+  </script>      
 </body>
 <script>
     function adicionarSelect() {

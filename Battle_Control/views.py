@@ -2,9 +2,10 @@ from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Personagem, Inventario, Item, Efeito, EfeitoAplicado, ItemAplicado
 from .forms import PersonagemForm
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from collections import defaultdict
 from django.views.decorators.http import require_POST
+from django.template.loader import render_to_string
 
 def index_view(request):
     return render(request, 'site/index.html')
@@ -182,19 +183,24 @@ def battle_view(request):
         aplicado.ativo = False
         aplicado.save()
 
-    if 'aumentar_turno' in request.POST:
-        personagem_id = int(request.POST.get('personagem_id'))
-        personagem = get_object_or_404(Personagem, id=personagem_id)
-        personagem.turno += 1
-        personagem.save()
+    if request.method == 'POST':
+        personagem_id = request.POST.get('personagem_id')
+        personagem = Personagem.objects.get(id=personagem_id)
+
+        if 'aumentar_turno' in request.POST:
+            personagem.turno += 1
+            personagem.save()
+
+        elif 'diminuir_turno' in request.POST:
+            personagem.turno -= 1
+            personagem.save()
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            html = render_to_string('partials/turno_card.html', {'p': personagem})
+            return JsonResponse({'html': html})
+
         return redirect('rpg:batalhar')
 
-    if 'diminuir_turno' in request.POST:
-        personagem_id = int(request.POST.get('personagem_id'))
-        personagem = get_object_or_404(Personagem, id=personagem_id)
-        personagem.turno = max(0, personagem.turno - 1)  # Evita número negativo
-        personagem.save()
-        return redirect('rpg:batalhar')
 
     # Pega todos os personagens disponíveis
     personagens = Personagem.objects.all()
