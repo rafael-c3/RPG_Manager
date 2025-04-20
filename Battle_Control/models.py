@@ -103,7 +103,7 @@ class Efeito(models.Model):
     TIPOS = [
         ('buff', 'Buff'),
         ('debuff', 'Debuff'),
-        ('passiva', 'Passiva'),
+        ('habilidade', 'Habilidade'),
         ('arma', 'Arma'),
     ]
 

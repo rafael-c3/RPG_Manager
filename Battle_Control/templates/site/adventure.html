@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<h2>Adicionar Itens a Personagens</h2>
+<form method="post">
+  {% csrf_token %}
+  <label for="personagem">Personagem:</label>
+  <select name="personagem_id" required>
+    {% for p in personagens %}
+      <option value="{{ p.id }}">{{ p.nome }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="item">Item:</label>
+  <select name="item_id" required>
+    {% for i in itens %}
+      <option value="{{ i.id }}">{{ i.nome }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="quantidade">Quantidade:</label>
+  <input type="number" name="quantidade" min="1" value="1" required>
+
+  <button type="submit">Adicionar</button>
+</form>
+<a class="link" href="{% url 'rpg:batalhar' %}">Inicar Batalha</a>
+
+<hr>
+
+<h2>Inventário dos Personagens</h2>
+{% for bloco in inventarios_por_personagem %}
+  <h3>{{ bloco.personagem.nome }}</h3>
+  <ul>
+    {% for inv in bloco.itens %}
+      <li>
+        {{ inv.item.nome }} x{{ inv.quantidade }}
+        <form action="{% url 'rpg:remover_item' inv.id %}" method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit">Remover</button>
+        </form>
+        <form action="{% url 'rpg:editar_item' inv.id %}" method="post" style="display:inline;">
+          {% csrf_token %}
+          <input type="number" name="quantidade" value="{{ inv.quantidade }}" min="1" required>
+          <button type="submit">Atualizar</button>
+        </form>
+      </li>
+    {% empty %}
+      <li>Nenhum item</li>
+    {% endfor %}
+  </ul>
+{% endfor %}
+
+</body>
+</html>

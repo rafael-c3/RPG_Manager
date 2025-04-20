@@ -3,6 +3,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Personagem, Inventario, Item, Efeito, EfeitoAplicado, ItemAplicado
 from .forms import PersonagemForm
 from django.http import HttpResponse
+from collections import defaultdict
+from django.views.decorators.http import require_POST
 
 def index_view(request):
     return render(request, 'site/index.html')
@@ -197,7 +199,10 @@ def battle_view(request):
     # Pega todos os personagens disponíveis
     personagens = Personagem.objects.all()
     # Busca os efeitos reversíveis disponíveis
-    efeitos = Efeito.objects.all()  # mostra todos
+    buffs = Efeito.objects.filter(tipo='buff')
+    debuffs = Efeito.objects.filter(tipo='debuff')
+    habilidades = Efeito.objects.filter(tipo='habilidade')
+
     # Busca personagens selecionados na sessão
     selecionados_ids = request.session.get('selecionados', [])
     selecionados = Personagem.objects.filter(id__in=selecionados_ids)
@@ -214,6 +219,55 @@ def battle_view(request):
     return render(request, 'site/battle.html', {
         'personagens': personagens,
         'personagens_por_tipo': personagens_por_tipo,
-        'efeitos': efeitos,
-
+        'buffs': buffs,
+        'debuffs': debuffs,
+        'habilidades': habilidades,
     })
+
+def adventure_view(request):
+    personagens = Personagem.objects.all()
+    itens = Item.objects.all()
+
+    if request.method == "POST":
+        personagem_id = request.POST.get("personagem_id")
+        item_id = request.POST.get("item_id")
+        quantidade = int(request.POST.get("quantidade", 1))
+
+        personagem = get_object_or_404(Personagem, id=personagem_id)
+        item = get_object_or_404(Item, id=item_id)
+
+        inventario, criado = Inventario.objects.get_or_create(personagem=personagem, item=item)
+        inventario.quantidade += quantidade
+        inventario.save()
+
+        return redirect("rpg:adventure")
+
+    # Estrutura: lista de dicionários por personagem
+    inventarios_por_personagem = []
+    for personagem in personagens:
+        inventario_do_personagem = Inventario.objects.filter(personagem=personagem).select_related("item")
+        inventarios_por_personagem.append({
+            "personagem": personagem,
+            "itens": inventario_do_personagem
+        })
+
+    return render(request, "site/adventure.html", {
+        "personagens": personagens,
+        "itens": itens,
+        "inventarios_por_personagem": inventarios_por_personagem,
+    })
+
+@require_POST
+def remover_item(request, inventario_id):
+    inventario = get_object_or_404(Inventario, id=inventario_id)
+    inventario.delete()
+    return redirect("rpg:adventure")
+
+@require_POST
+def editar_item(request, inventario_id):
+    inventario = get_object_or_404(Inventario, id=inventario_id)
+    nova_quantidade = int(request.POST.get("quantidade", 1))
+    inventario.quantidade = nova_quantidade
+    inventario.save()
+    return redirect("rpg:adventure")
+
