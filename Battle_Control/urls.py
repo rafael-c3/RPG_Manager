@@ -14,3 +14,4 @@ urlpatterns = [
     path("remover_item/<int:inventario_id>/", remover_item, name="remover_item"),
     path("editar_item/<int:inventario_id>/", editar_item, name="editar_item"),
 ]
+

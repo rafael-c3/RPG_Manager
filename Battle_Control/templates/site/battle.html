@@ -22,6 +22,19 @@
             cursor: pointer;
             transition: 0.2s;
         }
+        .barra-vida {
+          background-color: #333;
+          border-radius: 10px;
+          width: 200px;
+          height: 18px;
+          margin-bottom: 5px;
+        }
+
+        .barra-vida-interna {
+          background-color: #e53935;
+          height: 100%;
+          border-radius: 10px;
+        }
     </style>
 </head>
 <body>
@@ -65,11 +78,18 @@
                   {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
                   <button type="submit" name="diminuir_turno">-</button>
-                </form>
+                </form><br>
+                {% if p.imagem %}
+                  <img src="{{ p.imagem.url }}" width="100">
+                {% else %}
+                  <em>Sem imagem</em>
+                {% endif %}
+                <br>
                 <strong>
                   {{ p.nome }}<br>
                   Barreira Mágica: {{ p.barreira_magica }}<br>
-                  Vida atual: {{ p.vida }}<br>
+                  Vida atual: {{ p.vida }} / 100
+
                   Resistência: {{ p.resistencia }}<br>
                   Defesa: {{ p.defesa_total }}<br>
                   Armadura: {{ p.armadura }}<br>
