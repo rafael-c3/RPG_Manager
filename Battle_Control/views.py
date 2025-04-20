@@ -270,4 +270,3 @@ def editar_item(request, inventario_id):
     inventario.quantidade = nova_quantidade
     inventario.save()
     return redirect("rpg:adventure")
-

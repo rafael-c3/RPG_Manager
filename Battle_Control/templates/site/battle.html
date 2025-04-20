@@ -1,41 +1,12 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hora da Batalha</title>
-    <style>
-        body {
-            background-color: #18191C;
-            text-align: center;
-            color: white;
-            font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-        }
-        .link {
-            background-color: white; /* cor de fundo escura */
-            color: #18191C;               /* cor da letra */
-            text-decoration: none;      /* tira sublinhado */
-            border: none;               /* tira borda */
-            padding: 10px 20px;
-            border-radius: 5px;
-            display: inline-block;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .barra-vida {
-          background-color: #333;
-          border-radius: 10px;
-          width: 200px;
-          height: 18px;
-          margin-bottom: 5px;
-        }
+    <link rel="stylesheet" href="{% static 'Battle_Control/css/battle.css' %}">
 
-        .barra-vida-interna {
-          background-color: #e53935;
-          height: 100%;
-          border-radius: 10px;
-        }
-    </style>
 </head>
 <body>
     <h2>Selecione os Personagens</h2>
@@ -60,11 +31,16 @@
       <hr>
       
       <h2>Personagens Selecionados por Tipo:</h2>
+
       {% if personagens_por_tipo %}
         {% for tipo, lista in personagens_por_tipo.items %}
           <h3>{{ tipo|title }}</h3>
           <ul>
+          <div class="grid-personagens">  <!-- ADICIONE ESSA DIV AQUI -->
+            
             {% for p in lista %}
+            <div class="personagem-card">
+
               <p>
                 <p><strong>Turno:</strong> {{ p.turno }}</p>
 
@@ -84,12 +60,12 @@
                 {% else %}
                   <em>Sem imagem</em>
                 {% endif %}
+                
                 <br>
                 <strong>
                   {{ p.nome }}<br>
                   Barreira Mágica: {{ p.barreira_magica }}<br>
-                  Vida atual: {{ p.vida }} / 100
-
+                  Vida atual: {{ p.vida }}
                   Resistência: {{ p.resistencia }}<br>
                   Defesa: {{ p.defesa_total }}<br>
                   Armadura: {{ p.armadura }}<br>
@@ -222,7 +198,10 @@
                   <button type="submit">Remover</button>
                 </form>
               </p>
+
+            </div>
             {% endfor %}
+          </div>
           </ul>
         {% endfor %}
       {% else %}
@@ -230,7 +209,27 @@
       {% endif %}
 
     <a class='link'href="{% url 'rpg:index' %}">Voltar</a>
-    
+    <script>
+  const turnos = {};
+
+  function alterarTurno(personagemId, valor) {
+    if (!turnos.hasOwnProperty(personagemId)) {
+      turnos[personagemId] = 0;
+    }
+
+    turnos[personagemId] += valor;
+
+    // Evita número negativo, se quiser
+    if (turnos[personagemId] < 0) {
+      turnos[personagemId] = 0;
+    }
+
+    const span = document.getElementById(`contador-turnos-${personagemId}`);
+    if (span) {
+      span.textContent = turnos[personagemId];
+    }
+  }
+</script>
 </body>
 <script>
     function adicionarSelect() {
