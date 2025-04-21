@@ -35,7 +35,7 @@
 
                 <strong>{{ p.nome }} - Lv {{ p.level }}</strong><br><br>
                 {% if p.imagem %}
-                  <img src="{{ p.imagem.url }}" width="100">
+                  <img src="{{ p.imagem.url }}" width="100" class="imagem-personagem">
                 {% else %}
                   <em>Sem imagem</em>
                 {% endif %}<br><br>
@@ -49,54 +49,22 @@
                   Agilidade: {{ p.agilidade|floatformat:"-2" }}<br>
                   Sorte: {{ p.sorte|floatformat:"-2" }}<br>
                 </strong>
-                <!-- Listar Efeitos Ativos -->
-                <ul>
-                  {% for efeito_aplicado in p.efeitos_aplicados.all %}
-                    {% if efeito_aplicado.ativo %}
-                      <br>
-                        {% if efeito_aplicado.efeito.reversivel %}
-                          <span style="color: green;">🌀</span>
-                        {% else %}
-                          <span style="color: red;">⛔</span>
-                        {% endif %}
-                        {{ efeito_aplicado.efeito.nome }}
-                
-                        <form method="post" style="display:inline;">
-                          {% csrf_token %}
-                          <input type="hidden" name="remover_efeito_id" value="{{ efeito_aplicado.id }}">
-                          <button type="submit">Remover</button>
-                        </form>
-                    {% endif %}
-                  {% endfor %}
-                </ul>
-                {% with dano_bonus=0 %}
-                  {% for efeito_aplicado in p.efeitos_aplicados.all %}
-                    {% if efeito_aplicado.ativo %}
-                      {% with dano_bonus=dano_bonus|add:efeito_aplicado.efeito.modificador_dano %}
-                      <p>Bônus de Dano Total: {{ dano_bonus }}</p>
-                      {% endwith %}
-                    {% endif %}
-                  {% endfor %}
-                {% endwith %}
-                <br>
-
+ 
                 <form class="form-aplicar-dano">
                   {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <input type="number" name="dano" placeholder="Dano" step="0.1" required>
-                  <label><input type="checkbox" name="critico"> Crítico</label>
-                  <button type="submit">Aplicar Dano</button>
+                  <input class="dano" type="number" name="dano" placeholder="Dano" step="0.1" required>
+                  <label><input class="checkbox" type="checkbox" name="critico"> 💥</label>
+                  <button type="submit">Atacar</button>
                 </form>
                 <div class="resposta-dano" data-id="{{ p.id }}"></div>
 
                 <!-- Curar personagem -->
                 <form class="form-aplicar-cura">
+                  {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <input type="number" name="cura" placeholder="Cura" step="0.1">
-                  <label>
-                    Crítico:
-                    <input type="checkbox" name="critico">
-                  </label>
+                  <input class="dano" type="number" name="cura" placeholder="Cura" step="0.1">
+                  <label><input class="checkbox" type="checkbox" name="critico"> 💥</label>
                   <button type="submit">Curar</button>
                 </form>
 
@@ -165,6 +133,34 @@
                   <button type="submit" name="remover_personagem">Remover</button>
                 </form>
               </p>
+              
+              {% with dano_bonus=0 %}
+                {% for efeito_aplicado in p.efeitos_aplicados.all %}
+                  {% if efeito_aplicado.ativo %}
+                    {% with dano_bonus=dano_bonus|add:efeito_aplicado.efeito.modificador_dano %}
+                    <p>Bônus de Dano Total: {{ dano_bonus }}</p>
+                    {% endwith %}
+                  {% endif %}
+                {% endfor %}
+              {% endwith %}
+              
+              {% for efeito_aplicado in p.efeitos_aplicados.all %}
+                    {% if efeito_aplicado.ativo %}
+                      <br>
+                        {% if efeito_aplicado.efeito.reversivel %}
+                          <span style="color: green;">🌀</span>
+                        {% else %}
+                          <span style="color: red;">⛔</span>
+                        {% endif %}
+                        {{ efeito_aplicado.efeito.nome }}
+                
+                        <form method="post" style="display:inline;">
+                          {% csrf_token %}
+                          <input type="hidden" name="remover_efeito_id" value="{{ efeito_aplicado.id }}">
+                          <button type="submit">Remover</button>
+                        </form>
+                    {% endif %}
+              {% endfor %}
 
             </div>
             {% endfor %}
@@ -185,12 +181,12 @@
               <option value="{{ personagem.id }}">{{ personagem.nome }} ({{ personagem.tipo }})</option>
             {% endfor %}
           </select>
-          <button type="submit">Adicionar</button>
+          <button class="link" type="submit">Adicionar</button>
         </form>
         
         <form method="post" style="margin-top: 1rem;">
           {% csrf_token %}
-          <button name="limpar" value="1" type="submit">Limpar seleção</button>
+          <button class="link" name="limpar" value="1" type="submit">Limpar seleção</button>
         </form>
         <a class="link" href="{% url 'rpg:adventure' %}">Planejar Itens</a>
       
