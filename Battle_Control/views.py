@@ -2,9 +2,10 @@ from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Personagem, Inventario, Item, Efeito, EfeitoAplicado, ItemAplicado
 from .forms import PersonagemForm
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from collections import defaultdict
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 
 def index_view(request):
     return render(request, 'site/index.html')
@@ -84,27 +85,61 @@ def aplicar_dano(request):
     personagem.vida = max(personagem.vida - dano_final, 0)
     personagem.save()
 
+    return JsonResponse({
+        "mensagem": f"{personagem.nome} recebeu {dano_final} de dano!",
+        "vida_atual": float(personagem.vida),
+        "barreira": float(personagem.barreira_magica),
+    })
+
+@csrf_exempt
 def aplicar_cura(request):
-    personagem_id = int(request.POST.get('personagem_id'))
-    cura = int(request.POST.get('cura', 0))
-    personagem = get_object_or_404(Personagem, id=personagem_id)
-    personagem.vida += cura
-    personagem.save()
+    if request.method == 'POST':
+        personagem_id = request.POST.get('personagem_id')
+        cura = request.POST.get('cura')
+        critico = request.POST.get('critico') == 'on'
+        personagem = get_object_or_404(Personagem, pk=personagem_id)
 
-def dano_armadura(request):
-    personagem_id = int(request.POST.get('personagem_id'))
-    dano = int(request.POST.get('armadura_dano', 0))
-    personagem = get_object_or_404(Personagem, id=personagem_id)
-    personagem.armadura = max(0, personagem.armadura - dano)
-    personagem.save()
+        try:
+            cura = float(cura)
+        except ValueError:
+            return JsonResponse({"erro": "Cura inválida"}, status=400)
 
+        cura_final = Decimal(cura) * Decimal('1.5') if critico else Decimal(cura)
+
+        nova_vida = personagem.vida + cura_final
+        if personagem.vida_maxima:
+            personagem.vida = min(nova_vida, personagem.vida_maxima)
+        else:
+            personagem.vida = nova_vida  # fallback caso ainda não tenha vida_maxima definida
+
+        personagem.save()
+
+        return JsonResponse({
+            "mensagem": f"{personagem.nome} foi curado em {cura_final} pontos!",
+            "vida_atual": float(personagem.vida),
+        })
+
+@require_POST
 def aplicar_efeito(request):
-    efeito_id = int(request.POST['efeito_id'])
-    personagem_id = int(request.POST['personagem_id'])
+    efeito_id = request.POST.get('efeito_id')
+    personagem_id = request.POST.get('personagem_id')
+
+    if not efeito_id or not personagem_id:
+        return JsonResponse({"erro": "Dados incompletos."}, status=400)
+
     personagem = get_object_or_404(Personagem, id=personagem_id)
     efeito = get_object_or_404(Efeito, id=efeito_id)
+
     efeito_aplicado = EfeitoAplicado.objects.create(personagem=personagem, efeito=efeito)
     efeito_aplicado.aplicar()
+
+    return JsonResponse({
+        "mensagem": f"{efeito.nome} aplicado a {personagem.nome}.",
+        "efeito_id": efeito_aplicado.id,
+        "efeito_nome": efeito.nome,
+        "tipo": efeito.tipo,
+        "modificador_dano": float(efeito.modificador_dano),
+    })
 
 def remover_efeito(request):
     efeito_aplicado = get_object_or_404(EfeitoAplicado, id=request.POST['remover_efeito_id'])
@@ -167,9 +202,6 @@ def battle_view(request):
             aplicar_dano(request)
         elif 'cura' in request.POST:
             aplicar_cura(request)
-            return redirect('rpg:batalhar')
-        elif 'armadura_dano' in request.POST:
-            dano_armadura(request)
             return redirect('rpg:batalhar')
         elif 'efeito_id' in request.POST:
             aplicar_efeito(request)

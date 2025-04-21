@@ -40,20 +40,6 @@ body {
     margin-bottom: 10px;
 }
 
-.barra-vida {
-    background-color: #ddd;
-    border-radius: 5px;
-    height: 20px;
-    margin: 8px 0;
-    overflow: hidden;
-}
-
-.barra-vida-interna {
-    background-color: #4caf50;
-    height: 100%;
-    transition: width 0.3s ease;
-}
-
 button {
     margin: 5px;
     padding: 4px 10px;

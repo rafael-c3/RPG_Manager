@@ -5,12 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hora da Batalha</title>
-    <link rel="stylesheet" href="{% static 'Battle_Control/css/battle.css' %}">
-
+    <link rel="stylesheet" href="{% static 'Battle_Control/css/battle.css' %}?v=2">
 </head>
 <body>
       {% if personagens_por_tipo %}
-      <div class="personagem-grid"></div>
+      <div class="personagem-grid">
         {% for tipo, lista in personagens_por_tipo.items %}
           <h3>{{ tipo|title }}</h3>
           <ul>
@@ -20,9 +19,8 @@
             <div class="card">
 
               <p>
-                <div id="turno-{{ p.id }}">
-                  <p><strong>Turno:</strong> {{ p.turno }}</p>
-                </div>
+                <!--
+                  <strong>Turno:</strong> {{ p.turno }}
                 <form method="post" style="display: inline;" class="turno-form" data-action="diminuir" data-id="{{ p.id }}">
                   {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
@@ -33,16 +31,16 @@
                   {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
                   <button type="submit" name="diminuir_turno">-</button>
-                </form><br>
+                </form><br>-->
 
-                <strong>{{ p.nome }} - Lv {{ p.level }}</strong><br>
+                <strong>{{ p.nome }} - Lv {{ p.level }}</strong><br><br>
                 {% if p.imagem %}
                   <img src="{{ p.imagem.url }}" width="100">
                 {% else %}
                   <em>Sem imagem</em>
                 {% endif %}<br><br>
                 <strong>
-                  Vida atual: {{ p.vida|floatformat:"-2" }} ({{ p.barreira_magica }})<br>
+                  Vida atual: <span id="vida-{{ p.id }}">{{ p.vida|floatformat:"-2" }}</span> (<span id="barreira-{{ p.id }}">{{ p.barreira_magica }}</span>)<br>
                   Defesa: {{ p.defesa_total|floatformat:"-2" }} ({{ p.armadura|floatformat:"-2" }})<br>
                   Resistência: {{ p.resistencia|floatformat:"-2" }}<br>
                   Força: {{ p.força|floatformat:"-2" }}<br>
@@ -75,32 +73,30 @@
                   {% for efeito_aplicado in p.efeitos_aplicados.all %}
                     {% if efeito_aplicado.ativo %}
                       {% with dano_bonus=dano_bonus|add:efeito_aplicado.efeito.modificador_dano %}
+                      <p>Bônus de Dano Total: {{ dano_bonus }}</p>
                       {% endwith %}
                     {% endif %}
                   {% endfor %}
                 {% endwith %}
                 <br>
 
-                <form method="post">
+                <form class="form-aplicar-dano">
                   {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <label for="dano">Dano:</label>
-                  <input type="number" name="dano" min="0">
-                  
-                  <label>
-                    <input type="checkbox" name="critico">
-                    Crítico
-                  </label>
-                  
+                  <input type="number" name="dano" placeholder="Dano" step="0.1" required>
+                  <label><input type="checkbox" name="critico"> Crítico</label>
                   <button type="submit">Aplicar Dano</button>
                 </form>
+                <div class="resposta-dano" data-id="{{ p.id }}"></div>
 
                 <!-- Curar personagem -->
-                <form method="post">
-                  {% csrf_token %}
+                <form class="form-aplicar-cura">
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <label>Cura:</label>
-                  <input type="number" name="cura" min="0">
+                  <input type="number" name="cura" placeholder="Cura" step="0.1">
+                  <label>
+                    Crítico:
+                    <input type="checkbox" name="critico">
+                  </label>
                   <button type="submit">Curar</button>
                 </form>
 
@@ -132,16 +128,16 @@
                 {% endfor %}
 
                 <!-- Aplicar Efeito -->
-                <form method="post">
+                <form id="form-aplicar-efeito-{{ p.id }}" class="form-aplicar-efeito" method="post">
                   {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
                   <select name="efeito_id">
-                    {% for efeito in buffs %}
-                      <option value="{{ efeito.id }}">{{ efeito.nome }}</option>
-                    {% endfor %}
+                      {% for efeito in buffs %}
+                          <option value="{{ efeito.id }}">{{ efeito.nome }}</option>
+                      {% endfor %}
                   </select>
-                  <button type="submit">Aplicar Buff</button>
-                </form>
+                  <button type="submit" onclick="aplicarEfeito('{{ p.id }}')">Aplicar Buff</button>
+              </form>
                 <form method="post">
                   {% csrf_token %}
                   <input type="hidden" name="personagem_id" value="{{ p.id }}">
@@ -201,6 +197,79 @@
     <a class='link'href="{% url 'rpg:index' %}">Voltar</a>
 
     
+<script>
+  document.querySelectorAll('.form-aplicar-dano').forEach(form => {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      // Pega valores direto dos inputs
+      const personagemId = form.querySelector('input[name="personagem_id"]').value;
+      const dano = form.querySelector('input[name="dano"]').value;
+      const critico = form.querySelector('input[name="critico"]').checked ? 'on' : '';
+
+      // Monta corpo da requisição
+      const body = new URLSearchParams({
+        personagem_id: personagemId,
+        dano: dano,
+        critico: critico
+      });
+
+      const response = await fetch("{% url 'rpg:aplicar_dano' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString()
+      });
+
+      const data = await response.json();
+          // Atualizar a vida e barreira no HTML
+      const vidaSpan = document.querySelector(`#vida-${personagemId}`);
+      const barreiraSpan = document.querySelector(`#barreira-${personagemId}`);
+      
+      if (vidaSpan) vidaSpan.textContent = data.vida_atual;
+      if (barreiraSpan) barreiraSpan.textContent = data.barreira;
+
+      // Aqui você pode atualizar o DOM com data.mensagem ou recarregar só a parte da vida, etc.
+      console.log(data);
+    });
+  });
+  
+  document.querySelectorAll('.form-aplicar-cura').forEach(form => {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const personagemId = form.querySelector('input[name="personagem_id"]').value;
+      const cura = form.querySelector('input[name="cura"]').value;
+      const critico = form.querySelector('input[name="critico"]').checked ? 'on' : '';
+
+      const body = new URLSearchParams({
+        personagem_id: personagemId,
+        cura: cura,
+        critico: critico
+      });
+
+      const response = await fetch("{% url 'rpg:aplicar_cura' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString()
+      });
+
+      const data = await response.json();
+
+      const vidaSpan = document.querySelector(`#vida-${personagemId}`);
+      if (vidaSpan) vidaSpan.textContent = data.vida_atual;
+
+      console.log(data.mensagem);
+    });
+  });
+</script>
 </body>
 <script>
     function adicionarSelect() {

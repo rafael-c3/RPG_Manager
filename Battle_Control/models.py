@@ -13,6 +13,7 @@ class Personagem(models.Model):
     level = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(999)])
 
     vida = models.DecimalField(max_digits=5, decimal_places=1)
+    vida_maxima = models.DecimalField(max_digits=5, decimal_places=1)
     defesa = models.DecimalField(max_digits=5, decimal_places=1)
     armadura = models.DecimalField(max_digits=5, decimal_places=1)
     força = models.DecimalField(max_digits=5, decimal_places=1)
@@ -48,9 +49,12 @@ class Personagem(models.Model):
         self.vida = max(self.vida - dano_reduzido, 0)
         self.save()
 
-    def curar(self, valor):
-        self.vida += valor
-        self.save()
+    def curar(self, quantidade):
+        if not isinstance(quantidade, Decimal):
+            quantidade = Decimal(quantidade)
+        self.vida += quantidade
+        if self.vida_maxima:
+            self.vida = min(self.vida, self.vida_maxima)
 
 
     def __str__(self):
@@ -112,7 +116,6 @@ class Efeito(models.Model):
     reversivel = models.BooleanField(default=True, help_text="Se marcado, o efeito será revertido ao ser removido.")
     modificador_dano = models.IntegerField(default=0)  # positivo ou negativo
 
-
     def __str__(self):
         return f"{self.nome} ({self.tipo})"
 
@@ -150,12 +153,19 @@ class EfeitoAplicado(models.Model):
 
     def aplicar(self):
         self.modificacoes_aplicadas = {}
+
         for modificador in self.efeito.modificadores.all():
             atributo = modificador.atributo
             valor = modificador.valor
-            original = getattr(self.personagem, atributo)
-            setattr(self.personagem, atributo, original + valor)
-            self.modificacoes_aplicadas[atributo] = float(valor)
+
+            if atributo == 'vida':
+                # Cura deve respeitar vida_maxima
+                self.personagem.curar(valor)
+            else:
+                original = getattr(self.personagem, atributo)
+                setattr(self.personagem, atributo, original + valor)
+                self.modificacoes_aplicadas[atributo] = float(valor)
+
         self.personagem.save()
         self.save()
 
