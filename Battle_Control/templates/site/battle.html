@@ -9,27 +9,6 @@
 
 </head>
 <body>
-    <h2>Selecione os Personagens</h2>
-
-    <form method="post">
-        {% csrf_token %}
-        <label for="personagem">Escolha um personagem:</label>
-        <select name="personagem" id="personagem">
-          {% for personagem in personagens %}
-            <option value="{{ personagem.id }}">{{ personagem.nome }} ({{ personagem.tipo }})</option>
-          {% endfor %}
-        </select>
-        <button type="submit">Adicionar</button>
-      </form>
-      
-      <form method="post" style="margin-top: 1rem;">
-        {% csrf_token %}
-        <button name="limpar" value="1" type="submit">Limpar seleção</button>
-      </form>
-      <a class="link" href="{% url 'rpg:adventure' %}">Planejar Itens</a>
-      
-      <hr>
-      
       {% if personagens_por_tipo %}
       <div class="personagem-grid"></div>
         {% for tipo, lista in personagens_por_tipo.items %}
@@ -76,7 +55,7 @@
                 <ul>
                   {% for efeito_aplicado in p.efeitos_aplicados.all %}
                     {% if efeito_aplicado.ativo %}
-                      <li style="margin-bottom: 5px;">
+                      <br>
                         {% if efeito_aplicado.efeito.reversivel %}
                           <span style="color: green;">🌀</span>
                         {% else %}
@@ -89,7 +68,6 @@
                           <input type="hidden" name="remover_efeito_id" value="{{ efeito_aplicado.id }}">
                           <button type="submit">Remover</button>
                         </form>
-                      </li>
                     {% endif %}
                   {% endfor %}
                 </ul>
@@ -202,8 +180,27 @@
       {% endif %}
       </div>
 
-
+      <hr>  
+      <form method="post">
+          {% csrf_token %}
+          <label for="personagem">Escolha um personagem:</label>
+          <select name="personagem" id="personagem">
+            {% for personagem in personagens %}
+              <option value="{{ personagem.id }}">{{ personagem.nome }} ({{ personagem.tipo }})</option>
+            {% endfor %}
+          </select>
+          <button type="submit">Adicionar</button>
+        </form>
+        
+        <form method="post" style="margin-top: 1rem;">
+          {% csrf_token %}
+          <button name="limpar" value="1" type="submit">Limpar seleção</button>
+        </form>
+        <a class="link" href="{% url 'rpg:adventure' %}">Planejar Itens</a>
+      
     <a class='link'href="{% url 'rpg:index' %}">Voltar</a>
+
+    
 </body>
 <script>
     function adicionarSelect() {
