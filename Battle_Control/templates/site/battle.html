@@ -10,8 +10,6 @@
 <body>
 {% if personagens_por_tipo %}
 <div class="personagens-container">
-
-  
   <div class="aliados">
     <h3>Aliados</h3>
     {% if personagens_por_tipo.Aliado %}
@@ -42,14 +40,19 @@
                 <em>Sem imagem</em>
               {% endif %}<br><br>
               <strong>
-                Vida atual: <span id="vida-{{ p.id }}">{{ p.vida|floatformat:"-2" }}</span> (<span id="barreira-{{ p.id }}">{{ p.barreira_magica }}</span>)<br>
-                Defesa: {{ p.defesa_total|floatformat:"-2" }} ({{ p.armadura|floatformat:"-2" }})<br>
-                Resistência: {{ p.resistencia|floatformat:"-2" }}<br>
-                Força: {{ p.força|floatformat:"-2" }}<br>
-                Magia: {{ p.magia|floatformat:"-2" }}<br>
-                Mana: {{ p.mana|floatformat:"-2" }}<br>
-                Agilidade: {{ p.agilidade|floatformat:"-2" }}<br>
-                Sorte: {{ p.sorte|floatformat:"-2" }}<br>
+                Vida atual: <span id="vida-{{ p.id }}">{{ p.vida|floatformat:"-1" }}</span> (<span id="barreira-{{ p.id }}">{{ p.barreira_magica }}</span>)<br>
+                Defesa: {{ p.defesa_total|floatformat:"-1" }} ({{ p.armadura|floatformat:"-1" }})<br>
+                Resistência: {{ p.resistencia|floatformat:"-1" }}<br>
+                Força: {{ p.força|floatformat:"-1" }}<br>
+                {% if p.magia %}
+                  Magia: {{ p.magia|floatformat:"-1" }}<br>
+                {% endif %}
+                {% if p.mana %}
+                Mana: {{ p.mana|floatformat:"-1" }}<br>
+                {% endif %}
+                {% if p.agiliade %}
+                Agilidade: {{ p.agilidade|floatformat:"-1" }}<br>
+                {% endif %}
               </strong>
               <!----------------------------- Causar Dano ----------------------------->
               <form class="form-aplicar-dano">
