@@ -33,7 +33,23 @@ body {
     text-align: center;
     cursor: default;
     font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
 
+.personagens-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+    padding: 0 40px;
+}
+
+.aliados, .inimigos {
+    flex: 1;
+}
+
+.aliados h2, .inimigos h2 {
+    color: white;
+    margin-bottom: 10px;
+    text-align: center;
 }
 
 .imagem-personagem {

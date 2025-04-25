@@ -8,189 +8,357 @@
     <link rel="stylesheet" href="{% static 'Battle_Control/css/battle.css' %}?v=2">
 </head>
 <body>
-      {% if personagens_por_tipo %}
-      <div class="personagem-grid">
-        {% for tipo, lista in personagens_por_tipo.items %}
-          <h3>{{ tipo|title }}</h3>
-          <ul>
-          <div class="cards-container">  <!-- ADICIONE ESSA DIV AQUI -->
-            
-            {% for p in lista %}
-            <div class="card">
+{% if personagens_por_tipo %}
+<div class="personagens-container">
 
-              <p>
-                <!--
-                  <strong>Turno:</strong> {{ p.turno }}
-                <form method="post" style="display: inline;" class="turno-form" data-action="diminuir" data-id="{{ p.id }}">
-                  {% csrf_token %}
-                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <button type="submit" name="aumentar_turno">+</button>
-                </form>
+  
+  <div class="aliados">
+    <h3>Aliados</h3>
+    {% if personagens_por_tipo.Aliado %}
+    
+      <div class="cards-container">  <!-- ADICIONE ESSA DIV AQUI -->
+        {% for p in personagens_por_tipo.Aliado %}
+          <div class="card">
 
-                <form method="post" style="display: inline;" class="turno-form" data-action="diminuir" data-id="{{ p.id }}">
-                  {% csrf_token %}
-                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <button type="submit" name="diminuir_turno">-</button>
-                </form><br>-->
-
-                <strong>{{ p.nome }} - Lv {{ p.level }}</strong><br><br>
-                {% if p.imagem %}
-                  <img src="{{ p.imagem.url }}" width="100" class="imagem-personagem">
-                {% else %}
-                  <em>Sem imagem</em>
-                {% endif %}<br><br>
-                <strong>
-                  Vida atual: <span id="vida-{{ p.id }}">{{ p.vida|floatformat:"-2" }}</span> (<span id="barreira-{{ p.id }}">{{ p.barreira_magica }}</span>)<br>
-                  Defesa: {{ p.defesa_total|floatformat:"-2" }} ({{ p.armadura|floatformat:"-2" }})<br>
-                  Resistência: {{ p.resistencia|floatformat:"-2" }}<br>
-                  Força: {{ p.força|floatformat:"-2" }}<br>
-                  Magia: {{ p.magia|floatformat:"-2" }}<br>
-                  Mana: {{ p.mana|floatformat:"-2" }}<br>
-                  Agilidade: {{ p.agilidade|floatformat:"-2" }}<br>
-                  Sorte: {{ p.sorte|floatformat:"-2" }}<br>
-                </strong>
- 
-                <form class="form-aplicar-dano">
-                  {% csrf_token %}
-                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <input class="dano" type="number" name="dano" placeholder="Dano" step="0.1" required>
-                  <label><input class="checkbox" type="checkbox" name="critico"> 💥</label>
-                  <button type="submit">Atacar</button>
-                </form>
-                <div class="resposta-dano" data-id="{{ p.id }}"></div>
-
-                <!-- Curar personagem -->
-                <form class="form-aplicar-cura">
-                  {% csrf_token %}
-                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <input class="dano" type="number" name="cura" placeholder="Cura" step="0.1">
-                  <label><input class="checkbox" type="checkbox" name="critico"> 💥</label>
-                  <button type="submit">Curar</button>
-                </form>
-
-                {% for inv in p.inventario_set.all %}
-                  {% if inv.item.tipo == 'poção' %}
-                      <form method="post" style="margin-top: 0.5rem;">
-                          {% csrf_token %}
-                          <input type="hidden" name="usar_item" value="1">
-                          <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                          <input type="hidden" name="item_id" value="{{ inv.item.id }}">
-                          <button type="submit">
-                              Usar {{ inv.item.nome }} (x{{ inv.quantidade }})
-                          </button>
-                      </form>
-                  {% endif %}
-                {% endfor %}
-
-                {% for item_aplicado in p.itens_aplicados.all %}
-                  {% if item_aplicado.ativo %}
-                    <li>
-                      🌀 {{ item_aplicado.item.nome }}
-                      <form method="post" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="remover_item_aplicado_id" value="{{ item_aplicado.id }}">
-                        <button type="submit">Remover</button>
-                      </form>
-                    </li>
-                  {% endif %}
-                {% endfor %}
-
-                <!-- Aplicar Efeito -->
-                <form id="form-aplicar-efeito-{{ p.id }}" class="form-aplicar-efeito" method="post">
-                  {% csrf_token %}
-                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <select name="efeito_id">
-                      {% for efeito in buffs %}
-                          <option value="{{ efeito.id }}">{{ efeito.nome }}</option>
-                      {% endfor %}
-                  </select>
-                  <button type="submit" onclick="aplicarEfeito('{{ p.id }}')">Aplicar Buff</button>
+            <p>
+              <!--
+                <strong>Turno:</strong> {{ p.turno }}
+              <form method="post" style="display: inline;" class="turno-form" data-action="diminuir" data-id="{{ p.id }}">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <button type="submit" name="aumentar_turno">+</button>
               </form>
-                <form method="post">
-                  {% csrf_token %}
-                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <select name="efeito_id">
-                    {% for efeito in debuffs %}
-                      <option value="{{ efeito.id }}">{{ efeito.nome }}</option>
-                    {% endfor %}
-                  </select>
-                  <button type="submit">Aplicar Debuff</button>
-                </form>
-                <form method="post">
-                  {% csrf_token %}
-                  <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                  <select name="efeito_id">
-                    {% for efeito in habilidades %}
-                      <option value="{{ efeito.id }}">{{ efeito.nome }}</option>
-                    {% endfor %}
-                  </select>
-                  <button type="submit">Aplicar Efeito</button>
-                </form>
 
-                <form method="post">
-                  {% csrf_token %}
-                  <input type="hidden" name="remover_id" value="{{ p.id }}">
-                  <button type="submit" name="remover_personagem">Remover</button>
-                </form>
-              </p>
-              
-              {% with dano_bonus=0 %}
-                {% for efeito_aplicado in p.efeitos_aplicados.all %}
-                  {% if efeito_aplicado.ativo %}
-                    {% with dano_bonus=dano_bonus|add:efeito_aplicado.efeito.modificador_dano %}
-                    <p>Bônus de Dano Total: {{ dano_bonus }}</p>
-                    {% endwith %}
-                  {% endif %}
-                {% endfor %}
-              {% endwith %}
-              
-              {% for efeito_aplicado in p.efeitos_aplicados.all %}
-                    {% if efeito_aplicado.ativo %}
-                      <br>
-                        {% if efeito_aplicado.efeito.reversivel %}
-                          <span style="color: green;">🌀</span>
-                        {% else %}
-                          <span style="color: red;">⛔</span>
-                        {% endif %}
-                        {{ efeito_aplicado.efeito.nome }}
-                
-                        <form method="post" style="display:inline;">
-                          {% csrf_token %}
-                          <input type="hidden" name="remover_efeito_id" value="{{ efeito_aplicado.id }}">
-                          <button type="submit">Remover</button>
-                        </form>
-                    {% endif %}
+              <form method="post" style="display: inline;" class="turno-form" data-action="diminuir" data-id="{{ p.id }}">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <button type="submit" name="diminuir_turno">-</button>
+              </form><br>-->
+
+              <strong>{{ p.nome }} - Lv {{ p.level }}</strong><br><br>
+              {% if p.imagem %}
+                <img src="{{ p.imagem.url }}" width="100" class="imagem-personagem">
+              {% else %}
+                <em>Sem imagem</em>
+              {% endif %}<br><br>
+              <strong>
+                Vida atual: <span id="vida-{{ p.id }}">{{ p.vida|floatformat:"-2" }}</span> (<span id="barreira-{{ p.id }}">{{ p.barreira_magica }}</span>)<br>
+                Defesa: {{ p.defesa_total|floatformat:"-2" }} ({{ p.armadura|floatformat:"-2" }})<br>
+                Resistência: {{ p.resistencia|floatformat:"-2" }}<br>
+                Força: {{ p.força|floatformat:"-2" }}<br>
+                Magia: {{ p.magia|floatformat:"-2" }}<br>
+                Mana: {{ p.mana|floatformat:"-2" }}<br>
+                Agilidade: {{ p.agilidade|floatformat:"-2" }}<br>
+                Sorte: {{ p.sorte|floatformat:"-2" }}<br>
+              </strong>
+              <!----------------------------- Causar Dano ----------------------------->
+              <form class="form-aplicar-dano">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <input class="dano" type="number" name="dano" placeholder="Dano" step="0.1" required>
+                <label><input class="checkbox" type="checkbox" name="critico"> 💥</label>
+                <button type="submit">Atacar</button>
+              </form>
+              <div class="resposta-dano" data-id="{{ p.id }}"></div>
+              <!----------------------------- Curar ----------------------------->
+              <form class="form-aplicar-cura">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <input class="dano" type="number" name="cura" placeholder="Cura" step="0.1">
+                <label><input class="checkbox" type="checkbox" name="critico"> 💥</label>
+                <button type="submit">Curar</button>
+              </form>
+              <!----------------------------- Usar Item ----------------------------->
+              {% for inv in p.inventario_set.all %}
+                {% if inv.item.tipo == 'poção' %}
+                    <form method="post" style="margin-top: 0.5rem;">
+                        {% csrf_token %}
+                        <input type="hidden" name="usar_item" value="1">
+                        <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                        <input type="hidden" name="item_id" value="{{ inv.item.id }}">
+                        <button type="submit">
+                            Usar {{ inv.item.nome }} (x{{ inv.quantidade }})
+                        </button>
+                    </form>
+                {% endif %}
+              {% endfor %}
+              <!----------------------------- Itens Usados ----------------------------->
+              {% for item_aplicado in p.itens_aplicados.all %}
+                {% if item_aplicado.ativo %}
+                  <li>
+                    🌀 {{ item_aplicado.item.nome }}
+                    <form method="post" style="display:inline;">
+                      {% csrf_token %}
+                      <input type="hidden" name="remover_item_aplicado_id" value="{{ item_aplicado.id }}">
+                      <button type="submit">Remover</button>
+                    </form>
+                  </li>
+                {% endif %}
               {% endfor %}
 
-            </div>
-            {% endfor %}
-          </div>
-          </ul>
-        {% endfor %}
-      {% else %}
-        <p>Nenhum personagem adicionado ainda.</p>
-      {% endif %}
-      </div>
+              <!----------------------------- Causar Efeito ----------------------------->
+              <form id="form-aplicar-efeito-{{ p.id }}" class="form-aplicar-efeito" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <select name="efeito_id">
+                    {% for efeito in buffs %}
+                        <option value="{{ efeito.id }}">{{ efeito.nome }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" onclick="aplicarEfeito('{{ p.id }}')">Aplicar Buff</button>
+              </form>
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <select name="efeito_id">
+                  {% for efeito in debuffs %}
+                    <option value="{{ efeito.id }}">{{ efeito.nome }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit">Aplicar Debuff</button>
+              </form>
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <select name="efeito_id">
+                  {% for efeito in habilidades %}
+                    <option value="{{ efeito.id }}">{{ efeito.nome }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit">Aplicar Efeito</button>
+              </form>
 
-      <hr>  
-      <form method="post">
-          {% csrf_token %}
-          <label for="personagem">Escolha um personagem:</label>
-          <select name="personagem" id="personagem">
-            {% for personagem in personagens %}
-              <option value="{{ personagem.id }}">{{ personagem.nome }} ({{ personagem.tipo }})</option>
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="remover_id" value="{{ p.id }}">
+                <button type="submit" name="remover_personagem">Remover</button>
+              </form>
+            </p>
+            <!-----------------------------  ---------------------------
+            {% with dano_bonus=0 %}
+              {% for efeito_aplicado in p.efeitos_aplicados.all %}
+                {% if efeito_aplicado.ativo %}
+                  {% with dano_bonus=dano_bonus|add:efeito_aplicado.efeito.modificador_dano %}
+                  <p>Bônus de Dano Total: {{ dano_bonus }}</p>
+                  {% endwith %}
+                {% endif %}
+              {% endfor %}
+            {% endwith %}
+            -->
+            
+            <!----------------------------- Efeitos Aplicados ----------------------------->
+            {% for efeito_aplicado in p.efeitos_aplicados.all %}
+                  {% if efeito_aplicado.ativo %}
+                    <br>
+                      {% if efeito_aplicado.efeito.reversivel %}
+                        <span style="color: green;">🌀</span>
+                      {% else %}
+                        <span style="color: red;">⛔</span>
+                      {% endif %}
+                      {{ efeito_aplicado.efeito.nome }}
+              
+                      <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="remover_efeito_id" value="{{ efeito_aplicado.id }}">
+                        <button type="submit">Remover</button>
+                      </form>
+                  {% endif %}
+            <!----------------------------- Final do For ----------------------------->
             {% endfor %}
-          </select>
-          <button class="link" type="submit">Adicionar</button>
-        </form>
-        
-        <form method="post" style="margin-top: 1rem;">
-          {% csrf_token %}
-          <button class="link" name="limpar" value="1" type="submit">Limpar seleção</button>
-        </form>
-        <a class="link" href="{% url 'rpg:adventure' %}">Planejar Itens</a>
-      
-    <a class='link'href="{% url 'rpg:index' %}">Voltar</a>
+          </div>          
+        {% endfor %}  
+      </div>
+    {% else %}
+      <p>Nenhum aliado encontrado.</p>
+    {% endif %}
+  </div>
+
+
+  <div class="inimigos">
+    <h3>Inimigos</h3>
+    {% if personagens_por_tipo.Aliado %}
+    
+      <div class="cards-container">  <!-- ADICIONE ESSA DIV AQUI -->
+        {% for p in personagens_por_tipo.Inimigo %}
+          <div class="card">
+
+            <p>
+              <!--
+                <strong>Turno:</strong> {{ p.turno }}
+              <form method="post" style="display: inline;" class="turno-form" data-action="diminuir" data-id="{{ p.id }}">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <button type="submit" name="aumentar_turno">+</button>
+              </form>
+
+              <form method="post" style="display: inline;" class="turno-form" data-action="diminuir" data-id="{{ p.id }}">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <button type="submit" name="diminuir_turno">-</button>
+              </form><br>-->
+
+              <strong>{{ p.nome }} - Lv {{ p.level }}</strong><br><br>
+              {% if p.imagem %}
+                <img src="{{ p.imagem.url }}" width="100" class="imagem-personagem">
+              {% else %}
+                <em>Sem imagem</em>
+              {% endif %}<br><br>
+              <strong>
+                Vida atual: <span id="vida-{{ p.id }}">{{ p.vida|floatformat:"-2" }}</span> (<span id="barreira-{{ p.id }}">{{ p.barreira_magica }}</span>)<br>
+                Defesa: {{ p.defesa_total|floatformat:"-2" }} ({{ p.armadura|floatformat:"-2" }})<br>
+                Resistência: {{ p.resistencia|floatformat:"-2" }}<br>
+                Força: {{ p.força|floatformat:"-2" }}<br>
+                Magia: {{ p.magia|floatformat:"-2" }}<br>
+                Mana: {{ p.mana|floatformat:"-2" }}<br>
+                Agilidade: {{ p.agilidade|floatformat:"-2" }}<br>
+                Sorte: {{ p.sorte|floatformat:"-2" }}<br>
+              </strong>
+              <!----------------------------- Causar Dano ----------------------------->
+              <form class="form-aplicar-dano">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <input class="dano" type="number" name="dano" placeholder="Dano" step="0.1" required>
+                <label><input class="checkbox" type="checkbox" name="critico"> 💥</label>
+                <button type="submit">Atacar</button>
+              </form>
+              <div class="resposta-dano" data-id="{{ p.id }}"></div>
+              <!----------------------------- Curar ----------------------------->
+              <form class="form-aplicar-cura">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <input class="dano" type="number" name="cura" placeholder="Cura" step="0.1">
+                <label><input class="checkbox" type="checkbox" name="critico"> 💥</label>
+                <button type="submit">Curar</button>
+              </form>
+              <!----------------------------- Usar Item ----------------------------->
+              {% for inv in p.inventario_set.all %}
+                {% if inv.item.tipo == 'poção' %}
+                    <form method="post" style="margin-top: 0.5rem;">
+                        {% csrf_token %}
+                        <input type="hidden" name="usar_item" value="1">
+                        <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                        <input type="hidden" name="item_id" value="{{ inv.item.id }}">
+                        <button type="submit">
+                            Usar {{ inv.item.nome }} (x{{ inv.quantidade }})
+                        </button>
+                    </form>
+                {% endif %}
+              {% endfor %}
+              <!----------------------------- Itens Usados ----------------------------->
+              {% for item_aplicado in p.itens_aplicados.all %}
+                {% if item_aplicado.ativo %}
+                  <li>
+                    🌀 {{ item_aplicado.item.nome }}
+                    <form method="post" style="display:inline;">
+                      {% csrf_token %}
+                      <input type="hidden" name="remover_item_aplicado_id" value="{{ item_aplicado.id }}">
+                      <button type="submit">Remover</button>
+                    </form>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              <!----------------------------- Causar Efeito ----------------------------->
+              <form id="form-aplicar-efeito-{{ p.id }}" class="form-aplicar-efeito" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <select name="efeito_id">
+                    {% for efeito in buffs %}
+                        <option value="{{ efeito.id }}">{{ efeito.nome }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" onclick="aplicarEfeito('{{ p.id }}')">Aplicar Buff</button>
+            </form>
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <select name="efeito_id">
+                  {% for efeito in debuffs %}
+                    <option value="{{ efeito.id }}">{{ efeito.nome }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit">Aplicar Debuff</button>
+              </form>
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <select name="efeito_id">
+                  {% for efeito in habilidades %}
+                    <option value="{{ efeito.id }}">{{ efeito.nome }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit">Aplicar Efeito</button>
+              </form>
+
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="remover_id" value="{{ p.id }}">
+                <button type="submit" name="remover_personagem">Remover</button>
+              </form>
+            </p>
+            <!----------------------------- Causar Dano ----------------------------
+            {% with dano_bonus=0 %}
+              {% for efeito_aplicado in p.efeitos_aplicados.all %}
+                {% if efeito_aplicado.ativo %}
+                  {% with dano_bonus=dano_bonus|add:efeito_aplicado.efeito.modificador_dano %}
+                  <p>Bônus de Dano Total: {{ dano_bonus }}</p>
+                  {% endwith %}
+                {% endif %}
+              {% endfor %}
+            {% endwith %}
+             --->
+            <!----------------------------- Efeitos Aplicados ----------------------------->
+            {% for efeito_aplicado in p.efeitos_aplicados.all %}
+                  {% if efeito_aplicado.ativo %}
+                    <br>
+                      {% if efeito_aplicado.efeito.reversivel %}
+                        <span style="color: green;">🌀</span>
+                      {% else %}
+                        <span style="color: red;">⛔</span>
+                      {% endif %}
+                      {{ efeito_aplicado.efeito.nome }}
+              
+                      <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="remover_efeito_id" value="{{ efeito_aplicado.id }}">
+                        <button type="submit">Remover</button>
+                      </form>
+                  {% endif %}
+            <!----------------------------- Final do For ----------------------------->
+            {% endfor %}
+          </div>          
+        {% endfor %}  
+      </div>
+    {% else %}
+      <p>Nenhum Inimigo encontrado.</p>
+    {% endif %}
+  </div>
+
+{% else %}
+  <p>Nenhum personagem adicionado ainda.</p>
+{% endif %}
+</div>
+
+<!----------------------------- Menu Bar ----------------------------->
+  <hr>  
+  <form method="post">
+      {% csrf_token %}
+      <label for="personagem">Escolha um personagem:</label>
+      <select name="personagem" id="personagem">
+        {% for personagem in personagens %}
+          <option value="{{ personagem.id }}">{{ personagem.nome }} ({{ personagem.tipo }})</option>
+        {% endfor %}
+      </select>
+      <button class="link" type="submit">Adicionar</button>
+    </form>
+    
+    <form method="post" style="margin-top: 1rem;">
+      {% csrf_token %}
+      <button class="link" name="limpar" value="1" type="submit">Limpar seleção</button>
+    </form>
+    <a class="link" href="{% url 'rpg:adventure' %}">Planejar Itens</a>
+  
+<a class='link'href="{% url 'rpg:index' %}">Voltar</a>
 
     
 <script>
