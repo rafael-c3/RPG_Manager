@@ -55,14 +55,27 @@
                 {% endif %}
               </strong>
               <!----------------------------- Causar Dano ----------------------------->
-              <form class="form-aplicar-dano">
+              <form method="post" >
                 {% csrf_token %}
-                <input type="hidden" name="personagem_id" value="{{ p.id }}">
-                <input class="dano" type="number" name="dano" placeholder="Dano" step="0.1" required>
-                <label><input class="checkbox" type="checkbox" name="critico"> 💥</label>
-                <button type="submit">Atacar</button>
+                <input type="hidden" name="atacante_id" value="{{ personagem.id }}">
+                
+                <label>Dano:</label>
+                <input class="dano" type="number" name="dano" required>
+                
+                <label>Alvo:</label>
+                <select name="personagem_id" required>
+                  {% for p in personagens %}
+                    <option value="{{ p.id }}">{{ p.nome }}</option>
+                  {% endfor %}
+                </select>
+              
+                <label>Crítico:</label>
+                <input type="checkbox" name="critico">
+              
+                <button type="submit">Causar Dano</button>
               </form>
-              <div class="resposta-dano" data-id="{{ p.id }}"></div>
+              
+              <div id="mensagem-dano"></div>
               <!----------------------------- Curar ----------------------------->
               <form class="form-aplicar-cura">
                 {% csrf_token %}
