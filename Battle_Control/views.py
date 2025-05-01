@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Personagem, Inventario, Item, Efeito, EfeitoAplicado, ItemAplicado
+from .models import Personagem, Inventario, Item, Efeito, EfeitoAplicado, ItemAplicado, Dinheiro
 from .forms import PersonagemForm
 from django.http import HttpResponse, JsonResponse
 from collections import defaultdict
@@ -304,4 +304,18 @@ def editar_item(request, inventario_id):
     nova_quantidade = int(request.POST.get("quantidade", 1))
     inventario.quantidade = nova_quantidade
     inventario.save()
+    return redirect("rpg:adventure")
+
+@require_POST
+def editar_dinheiro(request, personagem_id):
+    personagem = get_object_or_404(Personagem, id=personagem_id)
+    dinheiro, _ = Dinheiro.objects.get_or_create(personagem=personagem)
+
+    dinheiro.bronze = int(request.POST.get("bronze", 0))
+    dinheiro.prata = int(request.POST.get("prata", 0))
+    dinheiro.ouro = int(request.POST.get("ouro", 0))
+    dinheiro.platina = int(request.POST.get("platina", 0))
+    dinheiro.converter_para_superiores()
+    dinheiro.save()
+
     return redirect("rpg:adventure")

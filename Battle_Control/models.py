@@ -182,3 +182,25 @@ class EfeitoAplicado(models.Model):
 
     def __str__(self):
         return f"{self.efeito.nome} em {self.personagem.nome}"
+    
+class Dinheiro(models.Model):
+    personagem = models.OneToOneField(Personagem, on_delete=models.CASCADE, related_name="dinheiro")
+    bronze = models.PositiveIntegerField(default=0)
+    prata = models.PositiveIntegerField(default=0)
+    ouro = models.PositiveIntegerField(default=0)
+    platina = models.PositiveIntegerField(default=0)
+
+    def converter_para_superiores(self):
+        # Bronze para prata
+        self.prata += self.bronze // 100
+        self.bronze = self.bronze % 100
+
+        # Prata para ouro
+        self.ouro += self.prata // 100
+        self.prata = self.prata % 100
+
+        # Ouro para platina
+        self.platina += self.ouro // 100
+        self.ouro = self.ouro % 100
+
+        self.save()

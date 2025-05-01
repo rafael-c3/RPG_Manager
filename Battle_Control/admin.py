@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Personagem, Item, Inventario, Efeito, EfeitoModificador, EfeitoAplicado
+from .models import Personagem, Item, Inventario, Efeito, EfeitoModificador, EfeitoAplicado, Dinheiro
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
@@ -29,3 +29,5 @@ class EfeitoAdmin(admin.ModelAdmin):
 
 admin.site.register(Efeito, EfeitoAdmin)
 admin.site.register(EfeitoAplicado)
+
+admin.site.register(Dinheiro)
