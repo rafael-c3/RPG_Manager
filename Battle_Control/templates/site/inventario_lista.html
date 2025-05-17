@@ -7,43 +7,51 @@
     <title>Planejamento</title>
     <link rel="stylesheet" href="{% static 'Battle_Control/css/adventure.css' %}?v=2">
 </head>
-<body class="p-6 bg-gray-100">
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+<body>
+<div class="personagens-container">
+  <div class="cards-container">
     {% for p in personagens %}
-    <div class="bg-white rounded-xl shadow p-4">
-      <h2 class="text-xl font-bold mb-2">{{ p.nome }}</h2>
-      {% for inv in p.inventario_set.all %}
-      <div class="flex justify-between items-center border-b pb-2 mb-2">
-        <div>
-          <strong>{{ inv.item.nome }}</strong> x{{ inv.quantidade }}
-        </div>
-        <div class="space-x-1">
-          <form method="POST" action="{% url 'rpg:inventario_update' inv.pk %}" style="display:inline;">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="decrement">
-            <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded">−</button>
-          </form>
-          <form method="POST" action="{% url 'rpg:inventario_update' inv.pk %}" style="display:inline;">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="increment">
-            <button type="submit" class="px-2 py-1 bg-green-500 text-white rounded">+</button>
-          </form>
-        </div>
-      </div>
-      {% empty %}
-      <p class="text-gray-500">Nenhum item.</p>
-      {% endfor %}
+      <div class="card">
+        <h2>{{ p.nome }} - Lv {{ p.level }}</h2>
+        {% if p.imagem %}
+          <img src="{{ p.imagem.url }}" width="100" class="imagem-personagem">
+        {% else %}
+          <em>Sem imagem</em>
+        {% endif %}<br><br>
 
-      <form method="POST" action="{% url 'rpg:inventario_add' %}" class="mt-3">
-        {% csrf_token %}
-        {{ novo_form.as_p }}
-        <input type="hidden" name="personagem" value="{{ p.pk }}">
-        <button type="submit" class="mt-2 px-3 py-1 bg-blue-600 text-white rounded">
-          Adicionar Item
-        </button>
-      </form>
-    </div>
+        {% for inv in p.inventario_set.all %}
+        <div>
+          <div>
+            <strong>{{ inv.item.nome }}</strong> x{{ inv.quantidade }}
+          </div>
+          <div>
+            <form method="POST" action="{% url 'rpg:inventario_update' inv.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="decrement">
+              <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded">−</button>
+            </form>
+            <form method="POST" action="{% url 'rpg:inventario_update' inv.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="increment">
+              <button type="submit" class="px-2 py-1 bg-green-500 text-white rounded">+</button>
+            </form>
+          </div>
+        </div>
+        {% empty %}
+        <p>Nenhum item.</p>
+        {% endfor %}
+
+        <form method="POST" action="{% url 'rpg:inventario_add' %}" class="mt-3">
+          {% csrf_token %}
+          {{ novo_form.as_p }}
+          <input type="hidden" name="personagem" value="{{ p.pk }}">
+          <button type="submit" class="mt-2 px-3 py-1 bg-blue-600 text-white rounded">
+            Adicionar Item
+          </button>
+        </form>
+      </div>
     {% endfor %}
   </div>
+</div>
 </body>
 </html>
