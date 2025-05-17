@@ -185,15 +185,15 @@ class EfeitoAplicado(models.Model):
     
 class Dinheiro(models.Model):
     personagem = models.OneToOneField(Personagem, on_delete=models.CASCADE, related_name="dinheiro")
-    bronze = models.PositiveIntegerField(default=0)
+    cobre = models.PositiveIntegerField(default=0)
     prata = models.PositiveIntegerField(default=0)
     ouro = models.PositiveIntegerField(default=0)
     platina = models.PositiveIntegerField(default=0)
 
     def converter_para_superiores(self):
-        # Bronze para prata
-        self.prata += self.bronze // 100
-        self.bronze = self.bronze % 100
+        # Cobre para prata
+        self.prata += self.cobre // 100
+        self.cobre = self.cobre % 100
 
         # Prata para ouro
         self.ouro += self.prata // 100

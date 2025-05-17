@@ -8,6 +8,31 @@
     <link rel="stylesheet" href="{% static 'Battle_Control/css/adventure.css' %}?v=2">
 </head>
 <body>
+{% with carteira=personagens.0.dinheiro %}
+<div>
+  <h2>Carteira Compartilhada</h2>
+  <p>
+    💰 Cobre: <strong>{{ carteira.cobre }}</strong> |
+    🪙 Prata: <strong>{{ carteira.prata }}</strong> |
+    🧈 Ouro: <strong>{{ carteira.ouro }}</strong> |
+    👑 Platina: <strong>{{ carteira.platina }}</strong>
+  </p>
+  <form method="POST" action="{% url 'rpg:dinheiro_update' %}">
+    {% csrf_token %}
+    <select name="moeda" class="border p-1 rounded">
+      <option value="cobre">Cobre</option>
+      <option value="prata">Prata</option>
+      <option value="ouro">Ouro</option>
+      <option value="platina">Platina</option>
+    </select>
+    <input type="number" name="valor" min="1" max="100" required>
+    <button type="submit" name="acao" value="sub">−</button>
+    <button type="submit" name="acao" value="add">+</button>
+  </form>
+</div>
+{% endwith %}
+
+<br><br>
 <div class="personagens-container">
   <div class="cards-container">
     {% for p in personagens %}
@@ -53,5 +78,9 @@
     {% endfor %}
   </div>
 </div>
+
+<hr>
+<a class="link" href="{% url 'rpg:batalhar' %}">Ir para Batalha</a>
+<a class='link'href="{% url 'rpg:index' %}">Início</a>
 </body>
 </html>

@@ -46,3 +46,13 @@ class InventarioForm(forms.ModelForm):
             'quantidade': forms.NumberInput(attrs={'class': 'form-input', 'min': 1}),
         }
         
+class DinheiroForm(forms.Form):
+    MOEDAS = [
+        ('cobre', 'Cobre'),
+        ('prata', 'Prata'),
+        ('ouro', 'Ouro'),
+        ('platina', 'Platina'),
+    ]
+    moeda = forms.ChoiceField(choices=MOEDAS)
+    valor = forms.IntegerField(min_value=1, max_value=100)
+    acao = forms.ChoiceField(choices=[('add', 'Adicionar'), ('sub', 'Remover')])

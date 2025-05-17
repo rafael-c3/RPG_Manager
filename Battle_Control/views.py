@@ -1,7 +1,7 @@
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Personagem, Inventario, Item, Efeito, EfeitoAplicado, ItemAplicado, Dinheiro
-from .forms import PersonagemForm, InventarioForm
+from .forms import PersonagemForm, InventarioForm, DinheiroForm
 from django.http import HttpResponse, JsonResponse
 from collections import defaultdict
 from django.views.decorators.http import require_POST
@@ -296,4 +296,27 @@ def inventario_add(request):
             if not created:
                 obj.quantidade += form.cleaned_data['quantidade']
                 obj.save()
+    return redirect('rpg:inventario_lista')
+
+def dinheiro_update(request):
+    if request.method == 'POST':
+        form = DinheiroForm(request.POST)
+        if form.is_valid():
+            moeda = form.cleaned_data['moeda']
+            valor = form.cleaned_data['valor']
+            acao = form.cleaned_data['acao']
+
+            # Considera o primeiro personagem como dono da carteira global
+            dono = Personagem.objects.first()
+            dinheiro = dono.dinheiro
+
+            if acao == 'add':
+                setattr(dinheiro, moeda, getattr(dinheiro, moeda) + valor)
+            elif acao == 'sub':
+                atual = getattr(dinheiro, moeda)
+                novo = max(0, atual - valor)
+                setattr(dinheiro, moeda, novo)
+
+            dinheiro.converter_para_superiores()
+
     return redirect('rpg:inventario_lista')
