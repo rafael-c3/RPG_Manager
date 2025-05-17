@@ -1,7 +1,7 @@
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Personagem, Inventario, Item, Efeito, EfeitoAplicado, ItemAplicado, Dinheiro
-from .forms import PersonagemForm
+from .forms import PersonagemForm, InventarioForm
 from django.http import HttpResponse, JsonResponse
 from collections import defaultdict
 from django.views.decorators.http import require_POST
@@ -259,63 +259,41 @@ def battle_view(request):
         'habilidades': habilidades,
     })
 
-def adventure_view(request):
-    personagens = Personagem.objects.all()
-    itens = Item.objects.all()
+def inventario_lista(request):
+    personagens = Personagem.objects.prefetch_related('inventario_set__item')
 
-    if request.method == "POST":
-        personagem_id = request.POST.get("personagem_id")
-        item_id = request.POST.get("item_id")
-        quantidade = int(request.POST.get("quantidade", 1))
-
-        personagem = get_object_or_404(Personagem, id=personagem_id)
-        item = get_object_or_404(Item, id=item_id)
-
-        inventario, criado = Inventario.objects.get_or_create(personagem=personagem, item=item)
-        inventario.quantidade += quantidade
-        inventario.save()
-
-        return redirect("rpg:adventure")
-
-    # Estrutura: lista de dicionários por personagem
-    inventarios_por_personagem = []
-    for personagem in personagens:
-        inventario_do_personagem = Inventario.objects.filter(personagem=personagem).select_related("item")
-        inventarios_por_personagem.append({
-            "personagem": personagem,
-            "itens": inventario_do_personagem
-        })
-
-    return render(request, "site/adventure.html", {
-        "personagens": personagens,
-        "itens": itens,
-        "inventarios_por_personagem": inventarios_por_personagem,
+    # Form para adicionar direto de cada card
+    novo_form = InventarioForm()
+    return render(request, 'site/inventario_lista.html', {
+        'personagens': personagens,
+        'novo_form': novo_form,
     })
 
-@require_POST
-def remover_item(request, inventario_id):
-    inventario = get_object_or_404(Inventario, id=inventario_id)
-    inventario.delete()
-    return redirect("rpg:adventure")
+def inventario_update(request, pk):
+    inv = get_object_or_404(Inventario, pk=pk)
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'decrement':
+            if inv.quantidade > 1:
+                inv.quantidade -= 1
+                inv.save()
+            else:
+                inv.delete()  # Remove o item quando quantidade chega a 0
+        elif action == 'increment':
+            inv.quantidade += 1
+            inv.save()
+    return redirect('rpg:inventario_lista')
 
-@require_POST
-def editar_item(request, inventario_id):
-    inventario = get_object_or_404(Inventario, id=inventario_id)
-    nova_quantidade = int(request.POST.get("quantidade", 1))
-    inventario.quantidade = nova_quantidade
-    inventario.save()
-    return redirect("rpg:adventure")
-
-@require_POST
-def editar_dinheiro(request, personagem_id):
-    personagem = get_object_or_404(Personagem, id=personagem_id)
-    dinheiro, _ = Dinheiro.objects.get_or_create(personagem=personagem)
-
-    dinheiro.bronze = int(request.POST.get("bronze", 0))
-    dinheiro.prata = int(request.POST.get("prata", 0))
-    dinheiro.ouro = int(request.POST.get("ouro", 0))
-    dinheiro.platina = int(request.POST.get("platina", 0))
-    dinheiro.converter_para_superiores()
-    dinheiro.save()
-
-    return redirect("rpg:adventure")
+def inventario_add(request):
+    if request.method == 'POST':
+        form = InventarioForm(request.POST)
+        if form.is_valid():
+            obj, created = Inventario.objects.get_or_create(
+                personagem=form.cleaned_data['personagem'],
+                item=form.cleaned_data['item'],
+                defaults={'quantidade': form.cleaned_data['quantidade']}
+            )
+            if not created:
+                obj.quantidade += form.cleaned_data['quantidade']
+                obj.save()
+    return redirect('rpg:inventario_lista')

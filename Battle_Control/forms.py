@@ -1,5 +1,5 @@
 from django import forms
-from .models import Personagem
+from .models import Personagem, Inventario
 
 class PersonagemForm(forms.ModelForm):
     class Meta:
@@ -34,5 +34,15 @@ class PersonagemForm(forms.ModelForm):
             'necro': forms.NumberInput(attrs={'class': 'form-number'}),
             'sorte': forms.NumberInput(attrs={'class': 'form-number'}),
             'imagem': forms.FileInput(attrs={'class': 'form-button'}),
+        }
+
+class InventarioForm(forms.ModelForm):
+    class Meta:
+        model = Inventario
+        fields = ['personagem', 'item', 'quantidade']
+        widgets = {
+            'personagem': forms.HiddenInput(),
+            'item': forms.Select(attrs={'class': 'form-select'}),
+            'quantidade': forms.NumberInput(attrs={'class': 'form-input', 'min': 1}),
         }
         
