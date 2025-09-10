@@ -47,7 +47,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="personagem_id" value="{{ p.id }}">
                 <input type="hidden" name="item_id" value="{{ inv.item.id }}">
-                <button type="submit">Usar {{ inv.item.nome }} (x<span>{{ inv.quantidade }}</span>)</button>
+                <button type="submit" title="{{ inv.item.nome }}">🩸 (x<span>{{ inv.quantidade }}</span>)</button>
             </form>
         {% endfor %}
     </div>
