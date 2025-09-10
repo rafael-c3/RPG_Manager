@@ -10,19 +10,19 @@ class Personagem(models.Model):
 
     nome = models.CharField(max_length=20)
     tipo = models.CharField(max_length=10, choices=Tipo_Personagem, default='Aliado')
-    level = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(999)])
+    level = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(999)], default=0)
 
-    vida = models.DecimalField(max_digits=5, decimal_places=1)
-    vida_maxima = models.DecimalField(max_digits=5, decimal_places=1)
-    defesa = models.DecimalField(max_digits=5, decimal_places=1)
-    armadura = models.DecimalField(max_digits=5, decimal_places=1)
-    força = models.DecimalField(max_digits=5, decimal_places=1)
-    magia = models.DecimalField(max_digits=5, decimal_places=1)
-    mana = models.DecimalField(max_digits=5, decimal_places=1)
-    agilidade = models.DecimalField(max_digits=5, decimal_places=1)
-    resistencia = models.DecimalField(max_digits=5, decimal_places=1)
-    necro = models.DecimalField(max_digits=5, decimal_places=1)
-    sorte = models.DecimalField(max_digits=5, decimal_places=1)
+    vida = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    vida_maxima = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    defesa = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    armadura = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    força = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    magia = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    mana = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    agilidade = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    resistencia = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    necro = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    sorte = models.DecimalField(max_digits=5, decimal_places=1, default=0)
 
     barreira_magica = models.PositiveIntegerField(default=0)
     turno = models.IntegerField(default=0)
@@ -55,7 +55,101 @@ class Personagem(models.Model):
         self.vida += quantidade
         if self.vida_maxima:
             self.vida = min(self.vida, self.vida_maxima)
+        self.save()
 
+    def receber_dano_calculado(self, dano_base, is_critico=False):
+        """
+        Calcula e aplica dano, considerando efeitos, crítico, resistência e barreiras.
+        Retorna o valor final do dano que foi de fato subtraído da vida.
+        """
+        # Passo 1: Calcular o dano base + bônus/punições de efeitos
+        modificador_total = sum(e.efeito.modificador_dano for e in self.efeitos_aplicados.filter(ativo=True))
+        
+        # Passo 2: Aplicar o multiplicador de crítico, se houver
+        if is_critico:
+            # Crítico dobra o dano base e DEPOIS soma os modificadores
+            dano_total = (dano_base * 2) + modificador_total 
+            
+            # REGRA: Armadura é reduzida em 1 ao receber um crítico
+            self.reduzir_armadura(1)
+        else:
+            dano_total = dano_base + modificador_total
+
+        # Passo 3: Subtrair a Resistência (CORREÇÃO PRINCIPAL)
+        # REGRA: Resistência anula uma parte do dano (redução fixa)
+        dano_apos_resistencia = max(dano_total - self.resistencia, 0)
+
+        # Passo 4: Dano é absorvido pela Barreira Mágica, se houver
+        dano_final_antes_barreira = dano_apos_resistencia
+        dano_absorvido_barreira = 0
+        if self.barreira_magica > 0:
+            if dano_final_antes_barreira <= self.barreira_magica:
+                self.barreira_magica -= dano_final_antes_barreira
+                dano_absorvido_barreira = dano_final_antes_barreira
+            else:
+                dano_absorvido_barreira = self.barreira_magica
+                self.barreira_magica = 0
+        
+        dano_final_na_vida = dano_final_antes_barreira - dano_absorvido_barreira
+
+        # Passo 5: Aplicar o dano final à vida
+        vida_antiga = self.vida
+        self.vida = max(self.vida - dano_final_na_vida, 0)
+        self.save() # Salva todas as alterações (vida, armadura, barreira)
+        
+        # Retorna o dano total que o personagem de fato perdeu de vida
+        return vida_antiga - self.vida
+
+    def usar_item_do_inventario(self, item_id):
+        """
+        Busca um item no inventário, aplica seu efeito e o consome.
+        """
+        inventario_item = Inventario.objects.get(personagem=self, item_id=item_id)
+        item = inventario_item.item
+
+        atributo = item.atributo_afetado
+        valor = item.valor_efeito
+
+        if not hasattr(self, atributo):
+            raise ValueError(f"Atributo '{atributo}' desconhecido.")
+
+        if atributo == 'vida':
+            self.curar(valor)
+        else:
+            valor_atual = getattr(self, atributo)
+            setattr(self, atributo, valor_atual + valor)
+
+        if item.reversivel:
+            ItemAplicado.objects.create(personagem=self, item=item)
+        
+        # Consumir item
+        inventario_item.quantidade -= 1
+        if inventario_item.quantidade <= 0:
+            inventario_item.delete()
+        else:
+            inventario_item.save()
+        
+        self.save()
+        return f"{self.nome} usou {item.nome}."
+
+    def get_atributos_dict(self):
+        """Retorna um dicionário com os atributos atuais do personagem, útil para respostas JSON."""
+        return {
+            "vida": float(self.vida),
+            "vida_maxima": float(self.vida_maxima),
+            "defesa": float(self.defesa),
+            "armadura": float(self.armadura),
+            "defesa_total": float(self.defesa_total),
+            "forca": float(self.força),
+            "magia": float(self.magia),
+            "mana": float(self.mana),
+            "agilidade": float(self.agilidade),
+            "resistencia": float(self.resistencia),
+            "necro": float(self.necro),
+            "sorte": float(self.sorte),
+            "barreira_magica": float(self.barreira_magica),
+            "turno": self.turno
+        }
 
     def __str__(self):
         return self.nome

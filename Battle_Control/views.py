@@ -6,6 +6,8 @@ from django.http import HttpResponse, JsonResponse
 from collections import defaultdict
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.template.loader import render_to_string
+
 
 def index_view(request):
     return render(request, 'site/index.html')
@@ -48,216 +50,190 @@ def update_view(request, pk):
         if form.is_valid():
             form.save()
             return redirect('rpg:listar')
+    
         
-
-        
-def inicializar_sessao(request):
-    if 'selecionados' not in request.session:
-        request.session['selecionados'] = []
-
+@require_POST
 def aplicar_dano(request):
-    personagem_id = request.POST.get("personagem_id")
+    """Aplica dano a um personagem."""
+    try:
+        personagem_id = int(request.POST.get("personagem_id"))
+        dano_base = Decimal(request.POST.get("dano", "0"))
+        is_critico = request.POST.get("critico") == "on"
+    except (ValueError, TypeError):
+        return JsonResponse({"erro": "Valores inválidos fornecidos."}, status=400)
+
     personagem = get_object_or_404(Personagem, id=personagem_id)
-    dano = int(request.POST.get("dano", 0))
-    critico = request.POST.get("critico") == "on"
-
-    modificador_total = sum([e.efeito.modificador_dano for e in personagem.efeitos_aplicados.filter(ativo=True)])
-
-    dano_base = dano
-    bonus = modificador_total
-
-    if critico:
-        dano_total = (dano_base * 2) + bonus
-        personagem.armadura = max(personagem.armadura - 1, 0)
-        dano_final = dano_total
-    else:
-        dano_total = dano_base + bonus
-        dano_final = max(dano_total - personagem.resistencia, 0)
-
-    if personagem.barreira_magica > 0:
-        if dano_final <= personagem.barreira_magica:
-            personagem.barreira_magica -= dano_final
-            dano_final = 0
-        else:
-            dano_final -= personagem.barreira_magica
-            personagem.barreira_magica = 0
-
-    personagem.vida = max(personagem.vida - dano_final, 0)
-    personagem.save()
-
+    
+    # A lógica do modelo já está correta
+    dano_sofrido = personagem.receber_dano_calculado(dano_base, is_critico)
+    
+    # --- CORREÇÃO AQUI ---
+    # Agora retornamos os dados no formato que o JavaScript espera
     return JsonResponse({
-        "mensagem": f"{personagem.nome} recebeu {dano_final} de dano!",
-        "vida_atual": float(personagem.vida),
-        "barreira": float(personagem.barreira_magica),
+        "mensagem": f"{personagem.nome} recebeu {dano_sofrido:.1f} de dano!",
+        "personagem_id": personagem.id,
+        "atributos_atualizados": personagem.get_atributos_dict()
     })
 
-@csrf_exempt
+
+@csrf_exempt 
+@require_POST
 def aplicar_cura(request):
-    if request.method == 'POST':
-        personagem_id = request.POST.get('personagem_id')
-        cura = request.POST.get('cura')
-        critico = request.POST.get('critico') == 'on'
-        personagem = get_object_or_404(Personagem, pk=personagem_id)
+    """Aplica cura a um personagem."""
+    try:
+        personagem_id = int(request.POST.get('personagem_id'))
+        cura_base = Decimal(request.POST.get('cura', '0'))
+        is_critico = request.POST.get('critico') == 'on'
+    except (ValueError, TypeError):
+        return JsonResponse({"erro": "Valores inválidos fornecidos."}, status=400)
 
-        try:
-            cura = float(cura)
-        except ValueError:
-            return JsonResponse({"erro": "Cura inválida"}, status=400)
+    personagem = get_object_or_404(Personagem, pk=personagem_id)
+    
+    cura_final = cura_base * Decimal('1.5') if is_critico else cura_base
+    
+    personagem.curar(cura_final)
 
-        cura_final = Decimal(cura) * Decimal('1.5') if critico else Decimal(cura)
-
-        nova_vida = personagem.vida + cura_final
-        if personagem.vida_maxima:
-            personagem.vida = min(nova_vida, personagem.vida_maxima)
-        else:
-            personagem.vida = nova_vida  # fallback caso ainda não tenha vida_maxima definida
-
-        personagem.save()
-
-        return JsonResponse({
-            "mensagem": f"{personagem.nome} foi curado em {cura_final} pontos!",
-            "vida_atual": float(personagem.vida),
-        })
+    # --- CORREÇÃO AQUI TAMBÉM ---
+    # Agora retornamos os dados no formato que o JavaScript espera
+    return JsonResponse({
+        "mensagem": f"{personagem.nome} foi curado em {cura_final:.1f} pontos!",
+        "personagem_id": personagem.id,
+        "atributos_atualizados": personagem.get_atributos_dict()
+    })
 
 @require_POST
 def aplicar_efeito(request):
-    efeito_id = request.POST.get('efeito_id')
+    """Aplica um efeito (buff/debuff) a um personagem."""
     personagem_id = request.POST.get('personagem_id')
+    efeito_id = request.POST.get('efeito_id')
 
-    if not efeito_id or not personagem_id:
-        return JsonResponse({"erro": "Dados incompletos."}, status=400)
+    if not personagem_id or not efeito_id:
+        return JsonResponse({"erro": "IDs do personagem e do efeito são obrigatórios."}, status=400)
 
     personagem = get_object_or_404(Personagem, id=personagem_id)
     efeito = get_object_or_404(Efeito, id=efeito_id)
 
-    efeito_aplicado = EfeitoAplicado.objects.create(personagem=personagem, efeito=efeito)
-    efeito_aplicado.aplicar()
-
+    # A lógica de criação e aplicação já está corretamente nos modelos.
+    efeito_aplicado, criado = EfeitoAplicado.objects.get_or_create(
+        personagem=personagem, 
+        efeito=efeito,
+        defaults={'ativo': True}
+    )
+    
+    if criado:
+        efeito_aplicado.aplicar()
+        mensagem = f"Efeito '{efeito.nome}' aplicado a {personagem.nome}."
+    else:
+        # Se o efeito já existe, podemos reativá-lo ou apenas informar.
+        if not efeito_aplicado.ativo:
+            efeito_aplicado.ativo = True
+            efeito_aplicado.aplicar() # Reaplicar se necessário
+            mensagem = f"Efeito '{efeito.nome}' reativado em {personagem.nome}."
+        else:
+            mensagem = f"{personagem.nome} já está sob o efeito '{efeito.nome}'."
+    
+    # Retorna os atributos atualizados do personagem para o frontend.
     return JsonResponse({
-        "mensagem": f"{efeito.nome} aplicado a {personagem.nome}.",
-        "efeito_id": efeito_aplicado.id,
-        "efeito_nome": efeito.nome,
-        "tipo": efeito.tipo,
-        "modificador_dano": float(efeito.modificador_dano),
+        "mensagem": mensagem,
+        "personagem_id": personagem.id,
+        "atributos_atualizados": personagem.get_atributos_dict() # Método a ser criado no modelo.
     })
 
+@require_POST
 def remover_efeito(request):
-    efeito_aplicado = get_object_or_404(EfeitoAplicado, id=request.POST['remover_efeito_id'])
-    efeito_aplicado.remover()
+    """Remove um efeito aplicado de um personagem."""
+    efeito_aplicado_id = request.POST.get('remover_efeito_id')
+    efeito_aplicado = get_object_or_404(EfeitoAplicado, id=efeito_aplicado_id)
+    
+    personagem = efeito_aplicado.personagem
+    efeito_nome = efeito_aplicado.efeito.nome
 
+    efeito_aplicado.remover() # A lógica já está no modelo, ótimo!
+
+    return JsonResponse({
+        "mensagem": f"Efeito '{efeito_nome}' removido de {personagem.nome}.",
+        "personagem_id": personagem.id,
+        "atributos_atualizados": personagem.get_atributos_dict() # Retorna dados atualizados
+    })
+
+@require_POST
 def usar_item(request):
-    personagem_id = int(request.POST.get('personagem_id'))
-    item_id = int(request.POST.get('item_id'))
+    """Faz um personagem usar um item do inventário."""
+    try:
+        personagem_id = int(request.POST.get('personagem_id'))
+        item_id = int(request.POST.get('item_id'))
+    except (ValueError, TypeError):
+        return JsonResponse({"erro": "IDs inválidos."}, status=400)
+        
     personagem = get_object_or_404(Personagem, id=personagem_id)
-    inventario = get_object_or_404(Inventario, personagem=personagem, item_id=item_id)
-    item = inventario.item
+    
+    # A lógica de uso do item foi movida para o modelo Personagem.
+    # (Você precisará adicionar este método ao seu models.py)
+    try:
+        mensagem_resultado = personagem.usar_item_do_inventario(item_id)
+    except Inventario.DoesNotExist:
+        return JsonResponse({"erro": "Item não encontrado no inventário."}, status=404)
+    except Exception as e:
+        return JsonResponse({"erro": str(e)}, status=400)
 
-    if item.atributo_afetado == 'vida':
-        personagem.curar(item.valor_efeito)
-    elif item.atributo_afetado == 'mana':
-        personagem.mana += item.valor_efeito
-    elif item.atributo_afetado == 'armadura':
-        personagem.armadura += item.valor_efeito
-    elif item.atributo_afetado == 'barreira_magica':
-        personagem.barreira_magica += item.valor_efeito
+    return JsonResponse({
+        "mensagem": mensagem_resultado,
+        "personagem_id": personagem.id,
+        "atributos_atualizados": personagem.get_atributos_dict()
+    })
 
-    if item.reversivel:
-        ItemAplicado.objects.create(personagem=personagem, item=item)
-
-    inventario.quantidade -= 1
-    if inventario.quantidade <= 0:
-        inventario.delete()
-    else:
-        inventario.save()
-    personagem.save()
-
-def remover_item_aplicado(request):
-    aplicado = get_object_or_404(ItemAplicado, id=request.POST.get("remover_item_aplicado_id"))
-    personagem = aplicado.personagem
-    item = aplicado.item
-
-    valor = Decimal(item.valor_efeito)
-    atributo = item.atributo_afetado
-    if hasattr(personagem, atributo):
-        setattr(personagem, atributo, getattr(personagem, atributo) - valor)
-        personagem.save()
-
-    aplicado.ativo = False
-    aplicado.save()
-
-def alterar_turno(request, aumentar=True):
-    personagem_id = int(request.POST.get('personagem_id'))
-    personagem = get_object_or_404(Personagem, id=personagem_id)
-    if aumentar:
-        personagem.turno += 1
-    else:
-        personagem.turno = max(0, personagem.turno - 1)
-    personagem.save()
+# --- View Principal da Batalha ---
 
 def battle_view(request):
-    inicializar_sessao(request)
+    """
+    Renderiza a página de batalha e lida com a seleção de personagens na sessão.
+    As ações de combate (dano, cura, etc.) devem ser feitas por chamadas AJAX
+    para as views de ação específicas acima.
+    """
+    # Inicializa a lista de selecionados na sessão se não existir.
+    request.session.setdefault('selecionados', [])
 
     if request.method == 'POST':
-        if 'dano' in request.POST:
-            aplicar_dano(request)
-        elif 'cura' in request.POST:
-            aplicar_cura(request)
-            return redirect('rpg:batalhar')
-        elif 'efeito_id' in request.POST:
-            aplicar_efeito(request)
-            return redirect('rpg:batalhar')
-        elif 'remover_efeito_id' in request.POST:
-            remover_efeito(request)
-            return redirect('rpg:batalhar')
-        elif 'usar_item' in request.POST:
-            usar_item(request)
-            return redirect('rpg:batalhar')
-        elif 'remover_item_aplicado_id' in request.POST:
-            remover_item_aplicado(request)
-        elif 'aumentar_turno' in request.POST:
-            alterar_turno(request, aumentar=True)
-            return redirect('rpg:batalhar')
-        elif 'diminuir_turno' in request.POST:
-            alterar_turno(request, aumentar=False)
-            return redirect('rpg:batalhar')
-        elif 'limpar' in request.POST:
+        # Esta view agora só lida com a manipulação da lista de personagens
+        personagem_id_str = request.POST.get('personagem')
+        remover_id_str = request.POST.get('remover_id')
+
+        if 'limpar' in request.POST:
             request.session['selecionados'] = []
-            request.session.modified = True
-        elif 'remover_id' in request.POST:
-            remover_id = int(request.POST.get('remover_id'))
+        elif remover_id_str and remover_id_str.isdigit():
+            remover_id = int(remover_id_str)
             if remover_id in request.session['selecionados']:
                 request.session['selecionados'].remove(remover_id)
-                request.session.modified = True
-        else:
-            id_selecionado = request.POST.get('personagem')
-            if id_selecionado and id_selecionado.isdigit():
-                id_int = int(id_selecionado)
-                if id_int not in request.session['selecionados']:
-                    request.session['selecionados'].append(id_int)
-                    request.session.modified = True
+        elif personagem_id_str and personagem_id_str.isdigit():
+            personagem_id = int(personagem_id_str)
+            if personagem_id not in request.session['selecionados']:
+                request.session['selecionados'].append(personagem_id)
+        
+        request.session.modified = True
+        return redirect('rpg:batalhar') # Redireciona para atualizar a lista na tela
 
-    personagens = Personagem.objects.all()
-    buffs = Efeito.objects.filter(tipo='buff')
-    debuffs = Efeito.objects.filter(tipo='debuff')
-    habilidades = Efeito.objects.filter(tipo='habilidade')
-
+    # Lógica para GET (carregamento inicial da página)
+    personagens = Personagem.objects.all().order_by('nome')
+    efeitos = Efeito.objects.all()
+    
     selecionados_ids = request.session.get('selecionados', [])
     selecionados = Personagem.objects.filter(id__in=selecionados_ids)
 
+    # Agrupa os personagens por tipo para exibição
     personagens_por_tipo = {}
     for p in selecionados:
-        tipo = p.tipo or "Sem tipo"
-        if tipo not in personagens_por_tipo:
-            personagens_por_tipo[tipo] = []
-        personagens_por_tipo[tipo].append(p)
+        tipo = p.get_tipo_display() # Usa o método do Django para obter o nome legível
+        personagens_por_tipo.setdefault(tipo, []).append(p)
 
-    return render(request, 'site/battle.html', {
+    context = {
         'personagens': personagens,
         'personagens_por_tipo': personagens_por_tipo,
-        'buffs': buffs,
-        'debuffs': debuffs,
-        'habilidades': habilidades,
-    })
+        'buffs': efeitos.filter(tipo='buff'),
+        'debuffs': efeitos.filter(tipo='debuff'),
+        'habilidades': efeitos.filter(tipo='habilidade'),
+    }
+    return render(request, 'site/battle.html', context)
+
 
 def inventario_lista(request):
     personagens = Personagem.objects.prefetch_related('inventario_set__item')

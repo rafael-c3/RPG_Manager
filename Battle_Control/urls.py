@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import index_view, list_view, create_view, delete_view, detail_view, update_view, battle_view, aplicar_dano, aplicar_cura, aplicar_efeito, inventario_add, inventario_lista, inventario_update, dinheiro_update
+from .views import index_view, list_view, create_view, delete_view, detail_view, update_view, battle_view, aplicar_dano, aplicar_cura, aplicar_efeito, inventario_add, inventario_lista, inventario_update, dinheiro_update, usar_item, remover_efeito
 
 app_name = 'rpg'
 urlpatterns = [
@@ -12,7 +12,12 @@ urlpatterns = [
     path('battle/', battle_view, name='batalhar'),
     path('aplicar-dano/', aplicar_dano, name='aplicar_dano'),  # <- Aqui
     path('aplicar-cura/', aplicar_cura, name='aplicar_cura'),
+    
     path("aplicar-efeito/", aplicar_efeito, name="aplicar_efeito"),
+
+    path('usar-item/', usar_item, name='usar_item'),
+    path('remover-efeito/', remover_efeito, name='remover_efeito'),
+
     path('inventario/', inventario_lista, name='inventario_lista'),
     path('inventario/add/', inventario_add, name='inventario_add'),
     path('inventario/<int:pk>/update/', inventario_update, name='inventario_update'),

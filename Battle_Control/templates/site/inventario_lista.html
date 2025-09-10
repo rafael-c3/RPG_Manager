@@ -53,12 +53,12 @@
             <form method="POST" action="{% url 'rpg:inventario_update' inv.pk %}" style="display:inline;">
               {% csrf_token %}
               <input type="hidden" name="action" value="decrement">
-              <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded">−</button>
+              <button type="submit"">−</button>
             </form>
             <form method="POST" action="{% url 'rpg:inventario_update' inv.pk %}" style="display:inline;">
               {% csrf_token %}
               <input type="hidden" name="action" value="increment">
-              <button type="submit" class="px-2 py-1 bg-green-500 text-white rounded">+</button>
+              <button type="submit">+</button>
             </form>
           </div>
         </div>

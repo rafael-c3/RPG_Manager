@@ -1,0 +1,84 @@
+<div class="card" id="card-{{ p.id }}">
+    <div class="card-header">
+        <strong>{{ p.nome }} - Lv {{ p.level }}</strong>
+        <form action="{% url 'rpg:batalhar' %}" method="post" style="display: inline;">
+            {% csrf_token %}
+            <input type="hidden" name="remover_id" value="{{ p.id }}">
+            <button type="submit" class="btn-remover-card" title="Remover da Batalha">×</button>
+        </form>
+    </div>
+
+    {% if p.imagem %}
+        <img src="{{ p.imagem.url }}" width="100" class="imagem-personagem">
+    {% endif %}
+
+    <div class="stats" id="stats-{{ p.id }}">
+        Vida: <strong data-stat="vida">{{ p.vida|floatformat:"-1" }}</strong> / <span data-stat="vida_maxima">{{ p.vida_maxima|floatformat:"-1" }}</span> (<span data-stat="barreira_magica" style="color: cyan;">{{ p.barreira_magica|floatformat:"-1" }}</span>)<br>
+        Mana: <strong data-stat="mana">{{ p.mana|floatformat:"-1" }}</strong><br>
+        Defesa: <strong data-stat="defesa_total">{{ p.defesa_total|floatformat:"-1" }}</strong> (<span data-stat="armadura" style="color: #ccc;">{{ p.armadura|floatformat:"-1" }}</span>)<br>
+        Resistência: <strong data-stat="resistencia">{{ p.resistencia|floatformat:"-1" }}</strong><br>
+        Força: <strong data-stat="forca">{{ p.força|floatformat:"-1" }}</strong><br>
+        Magia: <strong data-stat="magia">{{ p.magia|floatformat:"-1" }}</strong><br>
+        Agilidade: <strong data-stat="agilidade">{{ p.agilidade|floatformat:"-1" }}</strong><br>
+        Necro: <strong data-stat="necro">{{ p.necro|floatformat:"-1" }}</strong><br>
+        Sorte: <strong data-stat="sorte">{{ p.sorte|floatformat:"-1" }}</strong><br>
+    </div>
+
+    <div class="actions">
+        <form class="form-ajax" action="{% url 'rpg:aplicar_dano' %}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="personagem_id" value="{{ p.id }}">
+            <input class="input-small" type="number" name="dano" placeholder="Dano" step="0.1" required>
+            <label><input type="checkbox" name="critico">💥</label>
+            <button type="submit">Atacar</button>
+        </form>
+        <form class="form-ajax" action="{% url 'rpg:aplicar_cura' %}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="personagem_id" value="{{ p.id }}">
+            <input class="input-small" type="number" name="cura" placeholder="Cura" step="0.1" required>
+            <label><input type="checkbox" name="critico">✨</label>
+            <button type="submit">Curar</button>
+        </form>
+    </div>
+
+    <div class="inventory">
+        {% for inv in p.inventario_set.all %}
+            <form class="form-ajax form-usar-item" action="{% url 'rpg:usar_item' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="personagem_id" value="{{ p.id }}">
+                <input type="hidden" name="item_id" value="{{ inv.item.id }}">
+                <button type="submit">Usar {{ inv.item.nome }} (x<span>{{ inv.quantidade }}</span>)</button>
+            </form>
+        {% endfor %}
+    </div>
+    
+    <div class="effects">
+        <form class="form-ajax form-aplicar-efeito" action="{% url 'rpg:aplicar_efeito' %}" method="POST">
+             {% csrf_token %}
+             <input type="hidden" name="personagem_id" value="{{ p.id }}">
+             <select name="efeito_id">
+                <option value="">Aplicar Efeito...</option>
+                <optgroup label="Buffs">{# ... #}</optgroup>
+                <optgroup label="Debuffs">{# ... #}</optgroup>
+                <optgroup label="Habilidades">{# ... #}</optgroup>
+             </select>
+             <button type="submit">✔️</button>
+        </form>
+
+        <ul class="effects-list" id="effects-list-{{ p.id }}">
+        {% for efeito_aplicado in p.efeitos_aplicados.all %}
+            {% if efeito_aplicado.ativo %}
+            <li>
+                {% if efeito_aplicado.efeito.reversivel %}🌀{% else %}⛔{% endif %}
+                {{ efeito_aplicado.efeito.nome }}
+                <form class="form-ajax form-remover-efeito" action="{% url 'rpg:remover_efeito' %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="remover_efeito_id" value="{{ efeito_aplicado.id }}">
+                    <button type="submit" class="btn-remover-efeito">×</button>
+                </form>
+            </li>
+            {% endif %}
+        {% endfor %}
+        </ul>
+    </div>
+</div>

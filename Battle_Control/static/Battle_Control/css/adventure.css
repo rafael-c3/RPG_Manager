@@ -24,4 +24,22 @@ body {
     cursor: default;
     font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
+.link {
+    background-color: white; /* cor de fundo escura */
+    color: #18191C;               /* cor da letra */
+    text-decoration: none;      /* tira sublinhado */
+    border: none;               /* tira borda */
+    padding: 10px 20px;
+    border-radius: 5px;
+    display: inline-block;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.link:hover {
+    background-color: white;
+    transform: scale(1.03);
+}
 
+.link:active {
+    transform: scale(0.98);
+}
